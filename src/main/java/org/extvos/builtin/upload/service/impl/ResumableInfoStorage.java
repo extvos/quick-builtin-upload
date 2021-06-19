@@ -1,6 +1,6 @@
-package org.extvos.builtin.config;
+package org.extvos.builtin.upload.service.impl;
 
-import org.extvos.builtin.entity.ResumableInfo;
+import org.extvos.builtin.upload.entity.ResumableInfo;
 
 import java.util.HashMap;
 

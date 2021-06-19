@@ -1,28 +1,32 @@
-package org.extvos.builtin.config;
+package org.extvos.builtin.upload.config;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
+
+import java.io.Serializable;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 
 /**
  * @author shenmc
  */
 @Configuration
-public class UploadConfig {
+public class UploadConfig implements Serializable {
     /**
      * 上传根目录
      */
-    @Value("${quick.builtin.upload.root:/upload}")
+    @Value("${quick.builtin.upload.root:/tmp/upload}")
     private String root;
     /**
      * 上传根目录
      */
-    @Value("${quick.builtin.upload.prefix:/upload}")
+    @Value("${quick.builtin.upload.prefix:/tmp/upload}")
     private String prefix;
     /**
      * 临时目录
      */
-    @Value("${quick.builtin.upload.temporary:/tmp}")
+    @Value("${quick.builtin.upload.temporary:/tmp/temp}")
     private String temporary;
     /**
      * 单片大小
@@ -129,5 +133,25 @@ public class UploadConfig {
 
     public Integer getPathSegments() {
         return pathSegments;
+    }
+
+    public Map<String, Object> values() {
+        Map<String, Object> m = new LinkedHashMap<>();
+        m.put("root", root);
+        m.put("prefix", prefix);
+        m.put("temporary", temporary);
+        m.put("chunkSize", chunkSize);
+        m.put("simultaneous", simultaneous);
+        m.put("chunkNumberParameterName", chunkNumberParameterName);
+        m.put("chunkSizeParameterName", chunkSizeParameterName);
+        m.put("currentChunkSizeParameterName", currentChunkSizeParameterName);
+        m.put("totalSizeParameterName", totalSizeParameterName);
+        m.put("typeParameterName", typeParameterName);
+        m.put("identifierParameterName", identifierParameterName);
+        m.put("fileNameParameterName", fileNameParameterName);
+        m.put("relativePathParameterName", relativePathParameterName);
+        m.put("totalChunksParameterName", totalChunksParameterName);
+        m.put("pathSegments", pathSegments);
+        return m;
     }
 }

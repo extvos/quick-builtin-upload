@@ -1,4 +1,4 @@
-package org.extvos.builtin.entity;
+package org.extvos.builtin.upload.entity;
 
 import org.springframework.util.StringUtils;
 

@@ -1,8 +1,8 @@
-package org.extvos.builtin.controller;
+package org.extvos.builtin.upload.controller;
 
-import org.extvos.builtin.config.ResumableInfoStorage;
-import org.extvos.builtin.config.UploadConfig;
-import org.extvos.builtin.entity.ResumableInfo;
+import org.extvos.builtin.upload.service.impl.ResumableInfoStorage;
+import org.extvos.builtin.upload.config.UploadConfig;
+import org.extvos.builtin.upload.entity.ResumableInfo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
@@ -109,31 +109,6 @@ public class Resumable {
         }
         info.url = getVisitPath(info.filePath);
         return info;
-    }
-
-    /**
-     * 校验是否图片文件
-     *
-     * @param filename
-     * @return
-     */
-    private static boolean verifyImages(String filename) {
-        Boolean flag = false;
-        //图片格式
-        String[] FILETYPES = new String[]{
-            ".jpg", ".bmp", ".jpeg", ".png", ".gif",
-            ".JPG", ".BMP", ".JPEG", ".PNG", ".GIF"
-        };
-        if (!StringUtils.isEmpty(filename)) {
-            for (int i = 0; i < FILETYPES.length; i++) {
-                String fileType = FILETYPES[i];
-                if (filename.endsWith(fileType)) {
-                    flag = true;
-                    break;
-                }
-            }
-        }
-        return flag;
     }
 
     /**

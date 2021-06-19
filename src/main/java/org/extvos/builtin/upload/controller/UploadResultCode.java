@@ -1,4 +1,4 @@
-package org.extvos.builtin.controller;
+package org.extvos.builtin.upload.controller;
 
 import org.extvos.restlet.Code;
 
@@ -11,6 +11,8 @@ public enum UploadResultCode implements Code {
      *
      */
     FORBIDDEN_CREATE(40311, "Not Allowed To Create"),
+    FILE_NOT_EXISTS(40411, "File Not Exists"),
+    SEGMENT_NOT_EXISTS(40412, "Segment Not Exists"),
     /**
      *
      */

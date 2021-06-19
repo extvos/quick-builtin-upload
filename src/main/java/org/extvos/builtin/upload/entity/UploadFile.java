@@ -1,4 +1,4 @@
-package org.extvos.builtin.entity;
+package org.extvos.builtin.upload.entity;
 
 import java.io.Serializable;
 
@@ -6,23 +6,27 @@ import java.io.Serializable;
  * @author shenmc
  */
 public class UploadFile implements Serializable {
+    private String identifier;
     private String filename;
     private String root;
     private String prefix;
     private String url;
     private long size;
+    private String originalName;
     private String checksum;
 
     public UploadFile() {
 
     }
 
-    public UploadFile(String filename, String root, String prefix, long size, String checksum) {
+    public UploadFile(String identifier, String filename, String root, String prefix, long size, String origName, String checksum) {
+        this.identifier = identifier;
         this.filename = filename;
         this.root = root;
         this.prefix = prefix;
         this.url = prefix + "/" + filename;
         this.size = size;
+        this.originalName = origName;
         this.checksum = checksum;
     }
 
@@ -74,5 +78,21 @@ public class UploadFile implements Serializable {
     public void setPrefix(String prefix) {
         this.prefix = prefix;
         this.url = prefix + "/" + this.filename;
+    }
+
+    public String getOriginalName() {
+        return originalName;
+    }
+
+    public void setOriginalName(String originalName) {
+        this.originalName = originalName;
+    }
+
+    public String getIdentifier() {
+        return identifier;
+    }
+
+    public void setIdentifier(String identifier) {
+        this.identifier = identifier;
     }
 }
