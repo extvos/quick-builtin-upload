@@ -4,7 +4,7 @@ import org.extvos.builtin.upload.service.StorageService;
 import org.extvos.restlet.Assert;
 
 /**
- * @author shenmc
+ * @author Mingcai SHEN
  */
 public class Uploader {
     private StorageService storageService;

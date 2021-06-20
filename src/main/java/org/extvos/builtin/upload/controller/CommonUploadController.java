@@ -14,7 +14,7 @@ import java.io.File;
 import java.util.Map;
 
 /**
- * @author shenmc
+ * @author Mingcai SHEN
  */
 @RestController
 @Api(tags = {"文件上传服务"})

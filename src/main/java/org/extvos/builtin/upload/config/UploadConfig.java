@@ -9,7 +9,7 @@ import java.util.Map;
 
 
 /**
- * @author shenmc
+ * @author Mingcai SHEN
  */
 @Configuration
 public class UploadConfig implements Serializable {

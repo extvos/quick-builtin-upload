@@ -5,7 +5,7 @@ import org.extvos.builtin.upload.entity.ResumableInfo;
 import java.util.HashMap;
 
 /**
- * @author shenmc
+ * @author Mingcai SHEN
  */
 public class ResumableInfoStorage {
     //Single instance

@@ -14,7 +14,7 @@ import java.util.Date;
 import java.util.UUID;
 
 /**
- * @author shenmc
+ * @author Mingcai SHEN
  */
 @Component
 public class Resumable {

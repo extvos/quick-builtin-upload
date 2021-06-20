@@ -3,7 +3,7 @@ package org.extvos.builtin.upload.controller;
 import org.extvos.restlet.Code;
 
 /**
- * @author shenmc
+ * @author Mingcai SHEN
  */
 
 public enum UploadResultCode implements Code {

@@ -6,7 +6,7 @@ import java.io.File;
 import java.util.HashSet;
 
 /**
- * @author shenmc
+ * @author Mingcai SHEN
  */
 public class ResumableInfo {
     public long chunkSize;

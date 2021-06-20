@@ -3,7 +3,7 @@ package org.extvos.builtin.upload.entity;
 import java.io.Serializable;
 
 /**
- * @author shenmc
+ * @author Mingcai SHEN
  */
 public class UploadFile implements Serializable {
     private String identifier;

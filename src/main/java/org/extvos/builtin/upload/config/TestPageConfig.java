@@ -5,7 +5,7 @@ import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 /**
- * @author shenmc
+ * @author Mingcai SHEN
  */
 @Configuration
 public class TestPageConfig implements WebMvcConfigurer {

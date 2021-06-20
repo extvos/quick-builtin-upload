@@ -11,7 +11,7 @@ import springfox.documentation.spi.DocumentationType;
 import springfox.documentation.spring.web.plugins.Docket;
 
 /**
- * @author shenmc
+ * @author Mingcai SHEN
  */
 @EntityScan("org.extvos.builtin.upload.entity")
 @MapperScan("org.extvos.builtin.upload.mapper")
