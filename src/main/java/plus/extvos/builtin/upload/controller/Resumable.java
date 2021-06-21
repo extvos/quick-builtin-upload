@@ -1,8 +1,8 @@
-package org.extvos.builtin.upload.controller;
+package plus.extvos.builtin.upload.controller;
 
-import org.extvos.builtin.upload.service.impl.ResumableInfoStorage;
-import org.extvos.builtin.upload.config.UploadConfig;
-import org.extvos.builtin.upload.entity.ResumableInfo;
+import plus.extvos.builtin.upload.service.impl.ResumableInfoStorage;
+import plus.extvos.builtin.upload.config.UploadConfig;
+import plus.extvos.builtin.upload.entity.ResumableInfo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;

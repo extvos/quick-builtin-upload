@@ -1,4 +1,4 @@
-package org.extvos.builtin.upload.config;
+package plus.extvos.builtin.upload.config;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;

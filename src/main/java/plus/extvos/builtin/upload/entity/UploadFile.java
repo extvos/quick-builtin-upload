@@ -1,4 +1,4 @@
-package org.extvos.builtin.upload.entity;
+package plus.extvos.builtin.upload.entity;
 
 import java.io.Serializable;
 

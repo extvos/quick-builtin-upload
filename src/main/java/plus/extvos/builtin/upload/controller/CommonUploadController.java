@@ -1,10 +1,10 @@
-package org.extvos.builtin.upload.controller;
+package plus.extvos.builtin.upload.controller;
 
-import org.extvos.builtin.upload.config.UploadConfig;
-import org.extvos.builtin.upload.entity.UploadFile;
-import org.extvos.builtin.upload.entity.UploadResult;
-import org.extvos.builtin.upload.service.StorageService;
-import org.extvos.restlet.exception.RestletException;
+import plus.extvos.builtin.upload.config.UploadConfig;
+import plus.extvos.builtin.upload.entity.UploadFile;
+import plus.extvos.builtin.upload.entity.UploadResult;
+import plus.extvos.builtin.upload.service.StorageService;
+import plus.extvos.restlet.exception.RestletException;
 import io.swagger.annotations.Api;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RequestMapping;
