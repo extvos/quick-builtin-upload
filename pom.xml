@@ -7,7 +7,7 @@
     <name>quick-builtin-upload</name>
     <artifactId>quick-builtin-upload</artifactId>
     <description>内置文件上传服务</description>
-    <version>1.0.0-SNAPSHOT</version>
+    <version>1.0.0</version>
     <packaging>jar</packaging>
 
     <properties>
@@ -38,13 +38,13 @@
         <dependency>
             <groupId>io.github.extvos</groupId>
             <artifactId>quick-lib-restlet</artifactId>
-            <version>1.0.0-SNAPSHOT</version>
+            <version>1.0.0</version>
         </dependency>
 
         <dependency>
             <groupId>io.github.extvos</groupId>
             <artifactId>quick-lib-common</artifactId>
-            <version>1.0.0-SNAPSHOT</version>
+            <version>1.0.0</version>
         </dependency>
 
     </dependencies>
