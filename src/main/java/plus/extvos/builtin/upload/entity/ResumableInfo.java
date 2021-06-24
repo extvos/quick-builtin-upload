@@ -1,7 +1,5 @@
 package plus.extvos.builtin.upload.entity;
 
-import org.springframework.util.StringUtils;
-
 import java.io.File;
 import java.util.HashSet;
 
