@@ -1,7 +1,12 @@
 package plus.extvos.builtin.upload.controller;
 
 import cn.hutool.core.io.file.FileNameUtil;
-import plus.extvos.builtin.upload.config.UploadConfig;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import plus.extvos.builtin.upload.entity.ResumableInfo;
 import plus.extvos.builtin.upload.entity.UploadFile;
 import plus.extvos.builtin.upload.entity.UploadResult;
@@ -10,13 +15,6 @@ import plus.extvos.common.utils.QuickHash;
 import plus.extvos.restlet.RestletCode;
 import plus.extvos.restlet.Result;
 import plus.extvos.restlet.exception.RestletException;
-import plus.extvos.restlet.utils.SpringContextHolder;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletRequest;
 import java.io.*;
@@ -95,7 +93,7 @@ public abstract class AbstractUploadController {
         } catch (FileNotFoundException e) {
             e.printStackTrace();
             throw new RestletException(UploadResultCode.FORBIDDEN_CREATE,
-                    "create file '" + f.getPath() + "' failed: " + e.getMessage());
+                "create file '" + f.getPath() + "' failed: " + e.getMessage());
         }
     }
 
@@ -113,7 +111,7 @@ public abstract class AbstractUploadController {
         /* We generate a random identifier here to allow upload the same filename to same category.*/
         String identifier = QuickHash.md5().random().hex();
         String targetFilename = buildTargetFilename(category, file.getOriginalFilename(), file.getContentType(),
-                identifier);
+            identifier);
         UploadFile uploadFile = new UploadFile(identifier, targetFilename, root, processor().prefix(), file.getSize(), file.getOriginalFilename(), "");
         String fullFilename = String.join("/", root, targetFilename);
         OutputStream out = createFile(fullFilename);
@@ -125,7 +123,7 @@ public abstract class AbstractUploadController {
         } catch (IOException e) {
             e.printStackTrace();
             throw new RestletException(UploadResultCode.FORBIDDEN_CREATE,
-                    "write file '" + targetFilename + "' failed: " + e.getMessage());
+                "write file '" + targetFilename + "' failed: " + e.getMessage());
         }
         try {
             /* call processor to process uploaded file, remove it when return TRUE of got an exception */
@@ -162,13 +160,13 @@ public abstract class AbstractUploadController {
 
 
     @ApiOperation(value = "文件上传", notes = "支持文件上传和切片上传。" +
-            "请勿使用Swagger测试，访问 <a target='_blank' href='_builtin/upload-test/index.html'>Upload Test</a>")
+        "请勿使用Swagger测试，访问 <a target='_blank' href='_builtin/upload-test/index.html'>Upload Test</a>")
     @PostMapping("/{category:[A-Za-z0-9_-]+}")
     public Result<Object> doFileUpload(
-            @PathVariable("category") String category,
-            @RequestParam(required = false) Map<String, String> queries,
-            @RequestPart(required = false) MultipartFile file,
-            @ApiParam(hidden = true) HttpServletRequest request) throws RestletException {
+        @PathVariable("category") String category,
+        @RequestParam(required = false) Map<String, String> queries,
+        @RequestPart(required = false) MultipartFile file,
+        @ApiParam(hidden = true) HttpServletRequest request) throws RestletException {
         ResumableInfo info = buildResumableInfo(queries);
         if (request.getContentLengthLong() < 1) {
             throw RestletException.badRequest("invalid request, request body can not be empty");
@@ -194,7 +192,7 @@ public abstract class AbstractUploadController {
         }
 
         String fullFilename = buildTargetFilename(
-                processor().useTemporary() ? processor().temporary() : processor().root(), category, info.filename, info.identifier);
+            processor().useTemporary() ? processor().temporary() : processor().root(), category, info.filename, info.identifier);
         if (processor().exists(fullFilename, info.identifier)) {
             return Result.data(info).success();
         } else {

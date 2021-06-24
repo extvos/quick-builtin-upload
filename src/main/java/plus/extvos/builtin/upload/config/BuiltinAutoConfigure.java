@@ -20,16 +20,16 @@ public class BuiltinAutoConfigure {
     @Bean
     public Docket createUploadDocket() {
         return new Docket(DocumentationType.SWAGGER_2)
-                .groupName("文件上传服务")
-                .apiInfo(new ApiInfoBuilder()
-                        .title("文件上传服务")
-                        .description("Builtin Upload services for generic use.")
-                        .contact(new Contact("Mingcai SHEN","https://github.com/","archsh@gmail.com"))
-                        .termsOfServiceUrl("https://github.com/quickstart/java-scaffolds/quick-builtin-upload.git")
-                        .version(getClass().getPackage().getImplementationVersion())
-                        .build())
-                .select()
-                .apis(RequestHandlerSelectors.basePackage("plus.extvos.builtin.upload"))
-                .build();
+            .groupName("文件上传服务")
+            .apiInfo(new ApiInfoBuilder()
+                .title("文件上传服务")
+                .description("Builtin Upload services for generic use.")
+                .contact(new Contact("Mingcai SHEN", "https://github.com/", "archsh@gmail.com"))
+                .termsOfServiceUrl("https://github.com/quickstart/java-scaffolds/quick-builtin-upload.git")
+                .version(getClass().getPackage().getImplementationVersion())
+                .build())
+            .select()
+            .apis(RequestHandlerSelectors.basePackage("plus.extvos.builtin.upload"))
+            .build();
     }
 }
