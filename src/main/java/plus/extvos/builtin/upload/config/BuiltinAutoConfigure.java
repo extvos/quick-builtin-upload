@@ -1,6 +1,5 @@
 package plus.extvos.builtin.upload.config;
 
-import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
@@ -14,7 +13,6 @@ import springfox.documentation.spring.web.plugins.Docket;
  * @author Mingcai SHEN
  */
 @EntityScan("plus.extvos.builtin.upload.entity")
-@MapperScan("plus.extvos.builtin.upload.mapper")
 @ComponentScan(basePackages = "plus.extvos.builtin.upload")
 public class BuiltinAutoConfigure {
     @Bean

@@ -12,9 +12,9 @@ import plus.extvos.builtin.upload.entity.UploadFile;
 import plus.extvos.builtin.upload.entity.UploadResult;
 import plus.extvos.builtin.upload.service.StorageService;
 import plus.extvos.common.utils.QuickHash;
-import plus.extvos.restlet.RestletCode;
-import plus.extvos.restlet.Result;
-import plus.extvos.restlet.exception.RestletException;
+import plus.extvos.common.ResultCode;
+import plus.extvos.common.Result;
+import plus.extvos.common.exception.ResultException;
 
 import javax.servlet.http.HttpServletRequest;
 import java.io.*;
@@ -51,16 +51,16 @@ public abstract class AbstractUploadController {
 
     private int[] pathSegments;
 
-    private int[] buildPathSegments() throws RestletException {
+    private int[] buildPathSegments() throws ResultException {
         if (pathSegments != null) {
             return pathSegments;
         }
         List<Integer> segs = new LinkedList<>();
         if (processor().pathSegments() < 2) {
-            throw RestletException.internalServerError("upload config error: path-segments can not less than 2");
+            throw ResultException.internalServerError("upload config error: path-segments can not less than 2");
         }
         if (processor().pathSegments() > 8) {
-            throw RestletException.internalServerError("upload config error: path-segments can not more than 8");
+            throw ResultException.internalServerError("upload config error: path-segments can not more than 8");
         }
         for (int i = 0; i < processor().pathSegments(); i++) {
             segs.add(i == 0 ? 2 : 4);
@@ -73,26 +73,26 @@ public abstract class AbstractUploadController {
         return pathSegments;
     }
 
-    private String buildTargetFilename(String category, String filename, String... refs) throws RestletException {
+    private String buildTargetFilename(String category, String filename, String... refs) throws ResultException {
         String targetFilename;
         String[] ss = QuickHash.md5().hash(category + filename + String.join("", refs)).hexSegments(buildPathSegments());
         targetFilename = String.join("/", category, String.join("/", ss)) + "." + FileNameUtil.extName(filename);
         return targetFilename;
     }
 
-    private OutputStream createFile(String filename) throws RestletException {
+    private OutputStream createFile(String filename) throws ResultException {
         File f = new File(filename);
         File pf = f.getParentFile();
         if (!pf.exists()) {
             if (!pf.mkdirs()) {
-                throw RestletException.forbidden("create path '" + pf.getPath() + "' failed.");
+                throw ResultException.forbidden("create path '" + pf.getPath() + "' failed.");
             }
         }
         try {
             return new FileOutputStream(f);
         } catch (FileNotFoundException e) {
             e.printStackTrace();
-            throw new RestletException(UploadResultCode.FORBIDDEN_CREATE,
+            throw new ResultException(UploadResultCode.FORBIDDEN_CREATE,
                 "create file '" + f.getPath() + "' failed: " + e.getMessage());
         }
     }
@@ -103,9 +103,9 @@ public abstract class AbstractUploadController {
      * @param category as category
      * @param file     as multipart file
      * @return uploaded file
-     * @throws RestletException when errors
+     * @throws ResultException when errors
      */
-    private Object uploadByMultipartFile(String category, Map<String, String> queries, MultipartFile file) throws RestletException {
+    private Object uploadByMultipartFile(String category, Map<String, String> queries, MultipartFile file) throws ResultException {
         /* When the upload is a single multi-part file */
         String root = processor().useTemporary() ? processor().temporary() : processor().root();
         /* We generate a random identifier here to allow upload the same filename to same category.*/
@@ -122,7 +122,7 @@ public abstract class AbstractUploadController {
             out.close();
         } catch (IOException e) {
             e.printStackTrace();
-            throw new RestletException(UploadResultCode.FORBIDDEN_CREATE,
+            throw new ResultException(UploadResultCode.FORBIDDEN_CREATE,
                 "write file '" + targetFilename + "' failed: " + e.getMessage());
         }
         try {
@@ -136,7 +136,7 @@ public abstract class AbstractUploadController {
             if (result.getResult() != null) {
                 return result.getResult();
             }
-        } catch (RestletException e) {
+        } catch (ResultException e) {
             if (!new File(fullFilename).delete()) {
                 log.warn("doFileUpload:> delete file {} failed", fullFilename);
             }
@@ -152,10 +152,10 @@ public abstract class AbstractUploadController {
      * @param info     primary Resumable information
      * @param request  the original request
      * @return uploaded file
-     * @throws RestletException when errors
+     * @throws ResultException when errors
      */
-    private Object uploadByResumable(String category, ResumableInfo info, Map<String, String> queries, HttpServletRequest request) throws RestletException {
-        throw RestletException.notImplemented("not implemented yet!!!");
+    private Object uploadByResumable(String category, ResumableInfo info, Map<String, String> queries, HttpServletRequest request) throws ResultException {
+        throw ResultException.notImplemented("not implemented yet!!!");
     }
 
 
@@ -166,10 +166,10 @@ public abstract class AbstractUploadController {
         @PathVariable("category") String category,
         @RequestParam(required = false) Map<String, String> queries,
         @RequestPart(required = false) MultipartFile file,
-        @ApiParam(hidden = true) HttpServletRequest request) throws RestletException {
+        @ApiParam(hidden = true) HttpServletRequest request) throws ResultException {
         ResumableInfo info = buildResumableInfo(queries);
         if (request.getContentLengthLong() < 1) {
-            throw RestletException.badRequest("invalid request, request body can not be empty");
+            throw ResultException.badRequest("invalid request, request body can not be empty");
         }
         if (info.valid()) {
             Object uploadFile = uploadByResumable(category, info, queries, request);
@@ -178,17 +178,17 @@ public abstract class AbstractUploadController {
             Object uploadFile = uploadByMultipartFile(category, queries, file);
             return Result.data(uploadFile).success();
         } else {
-            throw RestletException.badRequest("invalid request, neither segmented or full file");
+            throw ResultException.badRequest("invalid request, neither segmented or full file");
         }
     }
 
     @ApiOperation(value = "上传检查", notes = "对切片上传的切片进行检查，减少重复上传")
     @GetMapping("/{category:[A-Za-z0-9_-]+}")
     public Result<?> doUploadCheck(@PathVariable("category") String category,
-                                   @RequestParam(required = false) Map<String, String> queries) throws RestletException {
+                                   @RequestParam(required = false) Map<String, String> queries) throws ResultException {
         ResumableInfo info = buildResumableInfo(queries);
         if (!info.valid()) {
-            throw RestletException.badRequest("only segmenting is allowed");
+            throw ResultException.badRequest("only segmenting is allowed");
         }
 
         String fullFilename = buildTargetFilename(
@@ -196,7 +196,7 @@ public abstract class AbstractUploadController {
         if (processor().exists(fullFilename, info.identifier)) {
             return Result.data(info).success();
         } else {
-            return Result.message("file not exists").failure(RestletCode.NOT_FOUND);
+            return Result.message("file not exists").failure(ResultCode.NOT_FOUND);
         }
     }
 

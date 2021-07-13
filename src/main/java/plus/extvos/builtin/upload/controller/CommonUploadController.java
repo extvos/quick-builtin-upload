@@ -8,7 +8,7 @@ import plus.extvos.builtin.upload.config.UploadConfig;
 import plus.extvos.builtin.upload.entity.UploadFile;
 import plus.extvos.builtin.upload.entity.UploadResult;
 import plus.extvos.builtin.upload.service.StorageService;
-import plus.extvos.restlet.exception.RestletException;
+import plus.extvos.common.exception.ResultException;
 
 import java.io.File;
 import java.util.Map;
@@ -54,7 +54,7 @@ public class CommonUploadController extends AbstractUploadController implements 
     @Override
     public UploadResult process(UploadFile uploadFile,
                                 String category,
-                                Map<String, String> queries) throws RestletException {
+                                Map<String, String> queries) throws ResultException {
         return new UploadResult(new CommonUploadFile(uploadFile), false);
     }
 
