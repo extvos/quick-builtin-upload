@@ -23,7 +23,7 @@ public class BuiltinAutoConfigure {
                 .title("文件上传服务")
                 .description("Builtin Upload services for generic use.")
                 .contact(new Contact("Mingcai SHEN", "https://github.com/", "archsh@gmail.com"))
-                .termsOfServiceUrl("https://github.com/quickstart/java-scaffolds/quick-builtin-upload.git")
+                .termsOfServiceUrl("https://github.com/extvos/quick-builtin-upload.git")
                 .version(getClass().getPackage().getImplementationVersion())
                 .build())
             .select()
