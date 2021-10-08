@@ -17,7 +17,7 @@ import springfox.documentation.spring.web.plugins.Docket;
 @ComponentScan(basePackages = "plus.extvos.builtin.upload")
 public class BuiltinAutoConfigure {
     @Bean
-    @ConditionalOnProperty(prefix = "spring.swagger", name = "enabled", havingValue = "true")
+    @ConditionalOnProperty(prefix = "spring.swagger", name = "disabled", havingValue = "false", matchIfMissing = true)
     public Docket createUploadDocket() {
         return new Docket(DocumentationType.SWAGGER_2)
             .groupName("文件上传服务")
