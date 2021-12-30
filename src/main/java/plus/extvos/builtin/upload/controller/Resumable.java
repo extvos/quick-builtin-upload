@@ -50,7 +50,7 @@ public class Resumable {
             //Mark as uploaded.
             info.uploadedChunks.add(new ResumableInfo.ChunkNumber(resumableChunkNumber));
             if (info.checkIfUploadFinished()) { //Check if all chunks uploaded, and change filename
-                ResumableInfoStorage.getInstance().remove(info);
+                ResumableInfoStorage.getInstance().remove(info.identifier);
             }
         } catch (FileNotFoundException e) {
             e.printStackTrace();
@@ -82,12 +82,12 @@ public class Resumable {
         String suffixPath = suffixName;
         //日期目录
         String datePath = new StringBuffer()
-            .append(new SimpleDateFormat("yyyy").format(new Date()))
-            .append("/")
-            .append(new SimpleDateFormat("MM").format(new Date()))
-            .append("/")
-            .append(new SimpleDateFormat("dd").format(new Date()))
-            .toString();
+                .append(new SimpleDateFormat("yyyy").format(new Date()))
+                .append("/")
+                .append(new SimpleDateFormat("MM").format(new Date()))
+                .append("/")
+                .append(new SimpleDateFormat("dd").format(new Date()))
+                .toString();
         String fullPath = config.getRoot() + "/" + category + "/" + suffixPath + "/" + datePath;
         String visitPath = config.getPrefix() + "/" + category + "/" + suffixPath + "/" + datePath;
         //文件名
@@ -101,10 +101,9 @@ public class Resumable {
 
         ResumableInfoStorage storage = ResumableInfoStorage.getInstance();
 
-        ResumableInfo info = storage.get(resumableChunkSize, resumableTotalSize,
-            resumableIdentifier, resumableFilename, resumableRelativePath, resumableFilePath);
+        ResumableInfo info = storage.get(resumableIdentifier, 0);
         if (!info.valid()) {
-            storage.remove(info);
+            storage.remove(info.identifier);
             throw new Exception("Invalid request params.");
         }
         info.url = getVisitPath(info.filePath);

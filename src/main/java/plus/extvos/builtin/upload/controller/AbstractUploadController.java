@@ -1,6 +1,8 @@
 package plus.extvos.builtin.upload.controller;
 
 import cn.hutool.core.io.file.FileNameUtil;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import org.slf4j.Logger;
@@ -37,7 +39,7 @@ public abstract class AbstractUploadController {
      */
     protected abstract StorageService processor();
 
-    private ResumableInfo buildResumableInfo(Map<String, String> queries) {
+    private ResumableInfo buildResumableInfo(Map<String, String> queries, String... categories) {
         ResumableInfo info = new ResumableInfo();
         if (null != queries) {
             info.chunkSize = Long.parseLong(queries.getOrDefault(processor().currentChunkSizeParameterName(), "-1"));
@@ -45,6 +47,28 @@ public abstract class AbstractUploadController {
             info.identifier = queries.getOrDefault(processor().identifierParameterName(), "");
             info.filename = queries.getOrDefault(processor().fileNameParameterName(), "");
             info.relativePath = queries.getOrDefault(processor().relativePathParameterName(), "");
+            info.totalChunks = Integer.parseInt(queries.getOrDefault(processor().totalChunksParameterName(), "0"));
+            info.chunkNum = Integer.parseInt(queries.getOrDefault(processor().chunkNumberParameterName(), "0"));
+            if (categories.length > 0) {
+                info.fullFilename = buildTargetFilename(
+                        processor().useTemporary() ? processor().temporary() : processor().root(), String.join("/", categories), info.filename, info.identifier);
+                info.chunkFilename = String.join("/",
+                        processor().temporary(), String.join("/", categories), QuickHash.md5().hash(info.fullFilename).hex(),
+                        "segment." + info.chunkNum);
+            } else {
+                info.fullFilename = buildTargetFilename(
+                        processor().useTemporary() ? processor().temporary() : processor().root(), info.filename, info.identifier);
+                info.chunkFilename = String.join("/",
+                        processor().temporary(), QuickHash.md5().hash(info.fullFilename).hex(),
+                        "segment." + info.chunkNum);
+            }
+
+        }
+        ObjectMapper om = new ObjectMapper();
+        try {
+            log.debug("buildResumableInfo: {}", om.writeValueAsString(info));
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
         }
         return info;
     }
@@ -80,7 +104,7 @@ public abstract class AbstractUploadController {
         return targetFilename;
     }
 
-    private OutputStream createFile(String filename) throws ResultException {
+    private OutputStream createFileStream(String filename) throws ResultException {
         File f = new File(filename);
         File pf = f.getParentFile();
         if (!pf.exists()) {
@@ -93,7 +117,24 @@ public abstract class AbstractUploadController {
         } catch (FileNotFoundException e) {
             e.printStackTrace();
             throw new ResultException(UploadResultCode.FORBIDDEN_CREATE,
-                "create file '" + f.getPath() + "' failed: " + e.getMessage());
+                    "create file '" + f.getPath() + "' failed: " + e.getMessage());
+        }
+    }
+
+    private Writer createFileWriter(String filename) throws ResultException {
+        File f = new File(filename);
+        File pf = f.getParentFile();
+        if (!pf.exists()) {
+            if (!pf.mkdirs()) {
+                throw ResultException.forbidden("create path '" + pf.getPath() + "' failed.");
+            }
+        }
+        try {
+            return new FileWriter(f);
+        } catch (IOException e) {
+            e.printStackTrace();
+            throw new ResultException(UploadResultCode.FORBIDDEN_CREATE,
+                    "create file '" + f.getPath() + "' failed: " + e.getMessage());
         }
     }
 
@@ -111,10 +152,10 @@ public abstract class AbstractUploadController {
         /* We generate a random identifier here to allow upload the same filename to same category.*/
         String identifier = QuickHash.md5().random().hex();
         String targetFilename = buildTargetFilename(category, file.getOriginalFilename(), file.getContentType(),
-            identifier);
+                identifier);
         UploadFile uploadFile = new UploadFile(identifier, targetFilename, root, processor().prefix(), file.getSize(), file.getOriginalFilename(), "");
         String fullFilename = String.join("/", root, targetFilename);
-        OutputStream out = createFile(fullFilename);
+        OutputStream out = createFileStream(fullFilename);
         try {
             byte[] bytes = file.getBytes();
             uploadFile.setChecksum(QuickHash.md5().hash(bytes).hex());
@@ -123,7 +164,7 @@ public abstract class AbstractUploadController {
         } catch (IOException e) {
             e.printStackTrace();
             throw new ResultException(UploadResultCode.FORBIDDEN_CREATE,
-                "write file '" + targetFilename + "' failed: " + e.getMessage());
+                    "write file '" + targetFilename + "' failed: " + e.getMessage());
         }
         try {
             /* call processor to process uploaded file, remove it when return TRUE of got an exception */
@@ -155,18 +196,46 @@ public abstract class AbstractUploadController {
      * @throws ResultException when errors
      */
     private Object uploadByResumable(String category, ResumableInfo info, Map<String, String> queries, HttpServletRequest request) throws ResultException {
-        throw ResultException.notImplemented("not implemented yet!!!");
+        log.debug("uploadByResumable:> category {}", category);
+        log.debug("uploadByResumable:> info {}", info);
+        log.debug("uploadByResumable:> queries {}", queries);
+        if (!info.valid()) {
+            throw ResultException.badRequest("invalid resumble parameters");
+        }
+        try {
+            char[] buffer = new char[1024];
+            int len;
+            OutputStream out = createFileStream(info.chunkFilename);
+            //Save to file
+            InputStream is = request.getInputStream();
+            long readed = 0;
+            long content_length = request.getContentLength();
+            byte[] bytes = new byte[1024 * 100];
+            while(readed < content_length) {
+                int r = is.read(bytes);
+                if (r < 0)  {
+                    break;
+                }
+                out.write(bytes, 0, r);
+                readed += r;
+            }
+            out.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return info;
+//        throw ResultException.notImplemented("not implemented yet!!!");
     }
 
 
     @ApiOperation(value = "文件上传", notes = "支持文件上传和切片上传。" +
-        "请勿使用Swagger测试，访问 <a target='_blank' href='_builtin/upload-test/index.html'>Upload Test</a>")
+            "请勿使用Swagger测试，访问 <a target='_blank' href='_builtin/upload-test/index.html'>Upload Test</a>")
     @PostMapping("/{category:[A-Za-z0-9_-]+}")
     public Result<Object> doFileUpload(
-        @PathVariable("category") String category,
-        @RequestParam(required = false) Map<String, String> queries,
-        @RequestPart(required = false) MultipartFile file,
-        @ApiParam(hidden = true) HttpServletRequest request) throws ResultException {
+            @PathVariable("category") String category,
+            @RequestParam(required = false) Map<String, String> queries,
+            @RequestPart(required = false) MultipartFile file,
+            @ApiParam(hidden = true) HttpServletRequest request) throws ResultException {
         ResumableInfo info = buildResumableInfo(queries);
         if (request.getContentLengthLong() < 1) {
             throw ResultException.badRequest("invalid request, request body can not be empty");
@@ -191,11 +260,13 @@ public abstract class AbstractUploadController {
             throw ResultException.badRequest("only segmenting is allowed");
         }
 
-        String fullFilename = buildTargetFilename(
-            processor().useTemporary() ? processor().temporary() : processor().root(), category, info.filename, info.identifier);
-        if (processor().exists(fullFilename, info.identifier)) {
+        if (processor().exists(info.fullFilename, info.identifier)) {
             return Result.data(info).success();
         } else {
+
+            if (processor().exists(info.chunkFilename, info.identifier)) {
+                return Result.data(info).success();
+            }
             return Result.message("file not exists").failure(ResultCode.NOT_FOUND);
         }
     }
