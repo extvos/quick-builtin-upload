@@ -5,6 +5,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
+import org.apache.tomcat.util.http.fileupload.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.*;
@@ -13,6 +14,7 @@ import plus.extvos.builtin.upload.entity.ResumableInfo;
 import plus.extvos.builtin.upload.entity.UploadFile;
 import plus.extvos.builtin.upload.entity.UploadResult;
 import plus.extvos.builtin.upload.service.StorageService;
+import plus.extvos.builtin.upload.service.impl.ResumableInfoStorage;
 import plus.extvos.common.utils.QuickHash;
 import plus.extvos.common.ResultCode;
 import plus.extvos.common.Result;
@@ -20,10 +22,7 @@ import plus.extvos.common.exception.ResultException;
 
 import javax.servlet.http.HttpServletRequest;
 import java.io.*;
-import java.util.LinkedHashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author Mingcai SHEN
@@ -31,6 +30,8 @@ import java.util.Map;
 public abstract class AbstractUploadController {
 
     private static final Logger log = LoggerFactory.getLogger(AbstractUploadController.class);
+
+    private static final ResumableInfoStorage resumbleInfoStorage = ResumableInfoStorage.getInstance();
 
     /**
      * get storage service
@@ -51,7 +52,7 @@ public abstract class AbstractUploadController {
             info.chunkNum = Integer.parseInt(queries.getOrDefault(processor().chunkNumberParameterName(), "0"));
             if (categories.length > 0) {
                 info.fullFilename = buildTargetFilename(
-                        processor().useTemporary() ? processor().temporary() : processor().root(), String.join("/", categories), info.filename, info.identifier);
+                        String.join("/", processor().useTemporary() ? processor().temporary() : processor().root(), String.join("/", categories)), info.filename, info.identifier);
                 info.chunkFilename = String.join("/",
                         processor().temporary(), String.join("/", categories), QuickHash.md5().hash(info.fullFilename).hex(),
                         "segment." + info.chunkNum);
@@ -68,7 +69,8 @@ public abstract class AbstractUploadController {
         try {
             log.debug("buildResumableInfo: {}", om.writeValueAsString(info));
         } catch (JsonProcessingException e) {
-            e.printStackTrace();
+
+            log.error(">>", e);
         }
         return info;
     }
@@ -115,7 +117,8 @@ public abstract class AbstractUploadController {
         try {
             return new FileOutputStream(f);
         } catch (FileNotFoundException e) {
-            e.printStackTrace();
+
+            log.error(">>", e);
             throw new ResultException(UploadResultCode.FORBIDDEN_CREATE,
                     "create file '" + f.getPath() + "' failed: " + e.getMessage());
         }
@@ -132,7 +135,8 @@ public abstract class AbstractUploadController {
         try {
             return new FileWriter(f);
         } catch (IOException e) {
-            e.printStackTrace();
+
+            log.error(">>", e);
             throw new ResultException(UploadResultCode.FORBIDDEN_CREATE,
                     "create file '" + f.getPath() + "' failed: " + e.getMessage());
         }
@@ -162,7 +166,8 @@ public abstract class AbstractUploadController {
             out.write(bytes);
             out.close();
         } catch (IOException e) {
-            e.printStackTrace();
+
+            log.error(">>", e);
             throw new ResultException(UploadResultCode.FORBIDDEN_CREATE,
                     "write file '" + targetFilename + "' failed: " + e.getMessage());
         }
@@ -186,6 +191,57 @@ public abstract class AbstractUploadController {
         return uploadFile;
     }
 
+    private UploadFile mergeSegments(String identifier, int chunks) throws IOException {
+        String fullFilename = null;
+        File pf = null;
+        List<String> chunkFiles = new ArrayList<String>();
+        UploadFile uploadFile = new UploadFile();
+        log.debug("mergeSegments:> {}, {} ...", identifier, chunks);
+        for (int i = 1; i <= chunks; i++) {
+            ResumableInfo info = resumbleInfoStorage.get(identifier, i);
+            if (null == info) {
+                log.warn("can not get chunk info: {}[{}]", identifier, i);
+                return null;
+            }
+            if (null == fullFilename) {
+                fullFilename = info.fullFilename;
+                String fname = processor().useTemporary() ? fullFilename.substring(processor().temporary().length()) : fullFilename.substring(processor().root().length());
+                uploadFile.setFilename(fname);
+                uploadFile.setSize(info.totalSize);
+                uploadFile.setIdentifier(info.identifier);
+                uploadFile.setOriginalName(info.filename);
+                uploadFile.setUrl(processor().prefix() + "/" + fname);
+                uploadFile.setRoot(processor().root());
+                uploadFile.setPrefix(processor().prefix());
+            }
+            if (null == pf) {
+                pf = new File(info.chunkFilename).getParentFile();
+            }
+            chunkFiles.add(info.chunkFilename);
+        }
+        OutputStream out = createFileStream(fullFilename);
+        QuickHash qh = QuickHash.md5();
+        for (String filename : chunkFiles) {
+            log.debug("Reading segment {} ...", filename);
+            InputStream in = new FileInputStream(filename);
+            int len = 0;
+            byte[] bytes = new byte[1024 * 100];
+            while ((len = in.read(bytes)) > 0) {
+                out.write(bytes, 0, len);
+                qh.update(bytes, 0, len);
+            }
+            in.close();
+        }
+        out.close();
+        if (null != pf) {
+            FileUtils.deleteDirectory(pf);
+        }
+        uploadFile.setChecksum(qh.hex());
+        log.debug("merged segments of {} ", fullFilename);
+        return uploadFile;
+        // TODO: remove segments
+    }
+
     /**
      * Handling upload via Resumable mode
      *
@@ -202,28 +258,37 @@ public abstract class AbstractUploadController {
         if (!info.valid()) {
             throw ResultException.badRequest("invalid resumble parameters");
         }
+        UploadFile uploadFile = new UploadFile();
+        long contentLength = request.getContentLength();
+        if (contentLength != info.chunkSize) {
+            log.warn("uploadByResumable:> content-length not match chunk-size: {} {}", contentLength, info.chunkSize);
+        }
         try {
-            char[] buffer = new char[1024];
-            int len;
             OutputStream out = createFileStream(info.chunkFilename);
             //Save to file
             InputStream is = request.getInputStream();
             long readed = 0;
-            long content_length = request.getContentLength();
             byte[] bytes = new byte[1024 * 100];
-            while(readed < content_length) {
+            while (readed < contentLength) {
                 int r = is.read(bytes);
-                if (r < 0)  {
+                if (r < 0) {
                     break;
                 }
                 out.write(bytes, 0, r);
                 readed += r;
             }
+            is.close();
             out.close();
+            resumbleInfoStorage.set(info);
+            if (resumbleInfoStorage.size(info.identifier) >= info.totalChunks) {
+                uploadFile = mergeSegments(info.identifier, info.totalChunks);
+                resumbleInfoStorage.remove(info.identifier);
+            }
         } catch (IOException e) {
-            e.printStackTrace();
+            log.error(">>", e);
+            throw ResultException.internalServerError("read request failed: " + e.getMessage());
         }
-        return info;
+        return uploadFile;
 //        throw ResultException.notImplemented("not implemented yet!!!");
     }
 
@@ -236,7 +301,7 @@ public abstract class AbstractUploadController {
             @RequestParam(required = false) Map<String, String> queries,
             @RequestPart(required = false) MultipartFile file,
             @ApiParam(hidden = true) HttpServletRequest request) throws ResultException {
-        ResumableInfo info = buildResumableInfo(queries);
+        ResumableInfo info = buildResumableInfo(queries, category);
         if (request.getContentLengthLong() < 1) {
             throw ResultException.badRequest("invalid request, request body can not be empty");
         }
@@ -255,17 +320,26 @@ public abstract class AbstractUploadController {
     @GetMapping("/{category:[A-Za-z0-9_-]+}")
     public Result<?> doUploadCheck(@PathVariable("category") String category,
                                    @RequestParam(required = false) Map<String, String> queries) throws ResultException {
-        ResumableInfo info = buildResumableInfo(queries);
+        ResumableInfo info = buildResumableInfo(queries, category);
         if (!info.valid()) {
             throw ResultException.badRequest("only segmenting is allowed");
         }
+        UploadFile uploadFile = new UploadFile();
 
         if (processor().exists(info.fullFilename, info.identifier)) {
-            return Result.data(info).success();
+            return Result.data(uploadFile).success();
         } else {
-
             if (processor().exists(info.chunkFilename, info.identifier)) {
-                return Result.data(info).success();
+                resumbleInfoStorage.set(info);
+                if (resumbleInfoStorage.size(info.identifier) >= info.totalChunks) {
+                    try {
+                        mergeSegments(info.identifier, info.totalChunks);
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                        log.error(">>", e);
+                    }
+                }
+                return Result.data(uploadFile).success();
             }
             return Result.message("file not exists").failure(ResultCode.NOT_FOUND);
         }

@@ -1,8 +1,11 @@
 package plus.extvos.builtin.upload.service.impl;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import plus.extvos.builtin.upload.entity.ResumableInfo;
 
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
@@ -14,6 +17,7 @@ public class ResumableInfoStorage {
     }
 
     private static ResumableInfoStorage sInstance;
+    private static final Logger log = LoggerFactory.getLogger(ResumableInfoStorage.class);
 
     public static synchronized ResumableInfoStorage getInstance() {
         if (sInstance == null) {
@@ -25,7 +29,7 @@ public class ResumableInfoStorage {
     /**
      * resumableIdentifier --  ResumableInfo
      */
-    private final HashMap<String, Map<Integer, ResumableInfo>> infoMap = new HashMap<String, Map<Integer, ResumableInfo>>();
+    private final Map<String, Map<Integer, ResumableInfo>> infoMap = new LinkedHashMap<String, Map<Integer, ResumableInfo>>();
 
     /**
      * Get ResumableInfo from mMap or Create a new one.
@@ -35,7 +39,7 @@ public class ResumableInfoStorage {
      * @return
      */
     public synchronized ResumableInfo get(String identifier, Integer chunk) {
-
+//        log.debug("get:> {}, {}", identifier, chunk);
         Map<Integer, ResumableInfo> m = infoMap.get(identifier);
         if (null == m) {
             return null;
@@ -44,16 +48,31 @@ public class ResumableInfoStorage {
         }
     }
 
-    public synchronized void set(ResumableInfo info) {
+    public synchronized int size(String identifier) {
 
-        Map<Integer, ResumableInfo> m = infoMap.get(info);
+        Map<Integer, ResumableInfo> m = infoMap.get(identifier);
         if (null == m) {
-            m = new HashMap<Integer, ResumableInfo>();
+//            log.debug("size:> {} = {}", identifier, 0);
+            return 0;
+        } else {
+//            log.debug("size:> {} = {}", identifier, m.size());
+            return m.size();
+        }
+    }
+
+    public synchronized void set(ResumableInfo info) {
+//        log.debug("set:> {}, {}, {}", info.identifier, info.chunkNum, info.chunkFilename);
+        Map<Integer, ResumableInfo> m = infoMap.get(info.identifier);
+        if (null == m) {
+            m = new LinkedHashMap<Integer, ResumableInfo>();
             m.put(info.chunkNum, info);
             infoMap.put(info.identifier, m);
         } else {
             m.put(info.chunkNum, info);
+            infoMap.put(info.identifier, m);
         }
+//        log.debug("set:> {}", m);
+//        log.debug("set:> {}", infoMap);
     }
 
     /**
@@ -61,7 +80,7 @@ public class ResumableInfoStorage {
      *
      * @param identifier
      */
-    public void remove(String identifier) {
+    public synchronized void remove(String identifier) {
         infoMap.remove(identifier);
     }
 }
