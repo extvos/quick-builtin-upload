@@ -2,7 +2,7 @@ package plus.extvos.builtin.upload.service;
 
 import plus.extvos.builtin.upload.entity.UploadFile;
 import plus.extvos.builtin.upload.entity.UploadResult;
-import plus.extvos.restlet.exception.RestletException;
+import plus.extvos.common.exception.ResultException;
 
 import java.util.Map;
 
@@ -18,11 +18,11 @@ public interface StorageService {
      * @param category   the category of this file.
      * @param queries    the queries via http request
      * @return true or false, file will be deleted when return true.
-     * @throws RestletException if theres any exceptions.
+     * @throws ResultException if theres any exceptions.
      */
     UploadResult process(UploadFile uploadFile,
                          String category,
-                         Map<String, String> queries) throws RestletException;
+                         Map<String, String> queries) throws ResultException;
 
     /**
      * check if file exists, once if file exists, process will not be called

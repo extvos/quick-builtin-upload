@@ -1,8 +1,12 @@
 package plus.extvos.builtin.upload.service.impl;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import plus.extvos.builtin.upload.entity.ResumableInfo;
 
 import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 /**
  * @author Mingcai SHEN
@@ -13,6 +17,7 @@ public class ResumableInfoStorage {
     }
 
     private static ResumableInfoStorage sInstance;
+    private static final Logger log = LoggerFactory.getLogger(ResumableInfoStorage.class);
 
     public static synchronized ResumableInfoStorage getInstance() {
         if (sInstance == null) {
@@ -21,47 +26,61 @@ public class ResumableInfoStorage {
         return sInstance;
     }
 
-    //resumableIdentifier --  ResumableInfo
-    private HashMap<String, ResumableInfo> mMap = new HashMap<String, ResumableInfo>();
+    /**
+     * resumableIdentifier --  ResumableInfo
+     */
+    private final Map<String, Map<Integer, ResumableInfo>> infoMap = new LinkedHashMap<String, Map<Integer, ResumableInfo>>();
 
     /**
      * Get ResumableInfo from mMap or Create a new one.
      *
-     * @param resumableChunkSize
-     * @param resumableTotalSize
-     * @param resumableIdentifier
-     * @param resumableFilename
-     * @param resumableRelativePath
-     * @param resumableFilePath
+     * @param identifier
+     * @param chunk
      * @return
      */
-    public synchronized ResumableInfo get(long resumableChunkSize, long resumableTotalSize,
-                                          String resumableIdentifier, String resumableFilename,
-                                          String resumableRelativePath, String resumableFilePath) {
-
-        ResumableInfo info = mMap.get(resumableIdentifier);
-
-        if (info == null) {
-            info = new ResumableInfo();
-
-            info.chunkSize = resumableChunkSize;
-            info.totalSize = resumableTotalSize;
-            info.identifier = resumableIdentifier;
-            info.filename = resumableFilename;
-            info.relativePath = resumableRelativePath;
-            info.filePath = resumableFilePath;
-
-            mMap.put(resumableIdentifier, info);
+    public synchronized ResumableInfo get(String identifier, Integer chunk) {
+//        log.debug("get:> {}, {}", identifier, chunk);
+        Map<Integer, ResumableInfo> m = infoMap.get(identifier);
+        if (null == m) {
+            return null;
+        } else {
+            return m.get(chunk);
         }
-        return info;
+    }
+
+    public synchronized int size(String identifier) {
+
+        Map<Integer, ResumableInfo> m = infoMap.get(identifier);
+        if (null == m) {
+//            log.debug("size:> {} = {}", identifier, 0);
+            return 0;
+        } else {
+//            log.debug("size:> {} = {}", identifier, m.size());
+            return m.size();
+        }
+    }
+
+    public synchronized void set(ResumableInfo info) {
+//        log.debug("set:> {}, {}, {}", info.identifier, info.chunkNum, info.chunkFilename);
+        Map<Integer, ResumableInfo> m = infoMap.get(info.identifier);
+        if (null == m) {
+            m = new LinkedHashMap<Integer, ResumableInfo>();
+            m.put(info.chunkNum, info);
+            infoMap.put(info.identifier, m);
+        } else {
+            m.put(info.chunkNum, info);
+            infoMap.put(info.identifier, m);
+        }
+//        log.debug("set:> {}", m);
+//        log.debug("set:> {}", infoMap);
     }
 
     /**
      * É¾³ýResumableInfo
      *
-     * @param info
+     * @param identifier
      */
-    public void remove(ResumableInfo info) {
-        mMap.remove(info.identifier);
+    public synchronized void remove(String identifier) {
+        infoMap.remove(identifier);
     }
 }

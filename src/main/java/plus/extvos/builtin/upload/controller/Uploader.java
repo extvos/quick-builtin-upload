@@ -1,7 +1,7 @@
 package plus.extvos.builtin.upload.controller;
 
 import plus.extvos.builtin.upload.service.StorageService;
-import plus.extvos.restlet.Assert;
+import plus.extvos.common.Assert;
 
 /**
  * @author Mingcai SHEN

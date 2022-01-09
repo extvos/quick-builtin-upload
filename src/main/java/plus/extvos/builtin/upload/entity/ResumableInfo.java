@@ -9,10 +9,15 @@ import java.util.HashSet;
 public class ResumableInfo {
     public long chunkSize;
     public long totalSize;
+    public int totalChunks;
+    public int chunkNum;
     public String identifier;
     public String filename;
     public String relativePath;
     public String url;
+
+    public String fullFilename;
+    public String chunkFilename;
 
     public static class ChunkNumber {
         public ChunkNumber(int number) {
@@ -41,9 +46,9 @@ public class ResumableInfo {
 
     public boolean valid() {
         return chunkSize >= 0 && totalSize >= 0
-            && !identifier.isEmpty()
-            && !filename.isEmpty()
-            && !relativePath.isEmpty();
+                && !identifier.isEmpty()
+                && !filename.isEmpty()
+                && !relativePath.isEmpty();
     }
 
     public boolean checkIfUploadFinished() {
