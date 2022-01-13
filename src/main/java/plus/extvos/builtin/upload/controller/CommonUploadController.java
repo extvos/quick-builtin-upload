@@ -2,6 +2,7 @@ package plus.extvos.builtin.upload.controller;
 
 import io.swagger.annotations.Api;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import plus.extvos.builtin.upload.config.UploadConfig;
@@ -19,6 +20,7 @@ import java.util.Map;
 @RestController
 @Api(tags = {"文件上传服务"})
 @RequestMapping("/_builtin/upload")
+@ConditionalOnProperty(prefix = "quick.builtin.upload", name = "enabled", havingValue = "true")
 public class CommonUploadController extends AbstractUploadController implements StorageService {
 
     @Autowired

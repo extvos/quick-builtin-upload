@@ -6,23 +6,23 @@ import java.io.Serializable;
  * @author Mingcai SHEN
  */
 public class UploadResult implements Serializable {
-    private Object result;
+    private UploadFile result;
     private boolean processed;
 
     public UploadResult() {
 
     }
 
-    public UploadResult(Object ret, boolean processed) {
+    public UploadResult(UploadFile ret, boolean processed) {
         this.result = ret;
         this.processed = processed;
     }
 
-    public Object getResult() {
+    public UploadFile getResult() {
         return result;
     }
 
-    public void setResult(Object result) {
+    public void setResult(UploadFile result) {
         this.result = result;
     }
 

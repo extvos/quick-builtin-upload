@@ -150,7 +150,7 @@ public abstract class AbstractUploadController {
      * @return uploaded file
      * @throws ResultException when errors
      */
-    private Object uploadByMultipartFile(String category, Map<String, String> queries, MultipartFile file) throws ResultException {
+    private UploadFile uploadByMultipartFile(String category, Map<String, String> queries, MultipartFile file) throws ResultException {
         /* When the upload is a single multi-part file */
         String root = processor().useTemporary() ? processor().temporary() : processor().root();
         /* We generate a random identifier here to allow upload the same filename to same category.*/
@@ -251,7 +251,7 @@ public abstract class AbstractUploadController {
      * @return uploaded file
      * @throws ResultException when errors
      */
-    private Object uploadByResumable(String category, ResumableInfo info, Map<String, String> queries, HttpServletRequest request) throws ResultException {
+    private UploadFile uploadByResumable(String category, ResumableInfo info, Map<String, String> queries, HttpServletRequest request) throws ResultException {
         log.debug("uploadByResumable:> category {}", category);
         log.debug("uploadByResumable:> info {}", info);
         log.debug("uploadByResumable:> queries {}", queries);
@@ -296,7 +296,7 @@ public abstract class AbstractUploadController {
     @ApiOperation(value = "文件上传", notes = "支持文件上传和切片上传。" +
             "请勿使用Swagger测试，访问 <a target='_blank' href='_builtin/upload-test/index.html'>Upload Test</a>")
     @PostMapping("/{category:[A-Za-z0-9_-]+}")
-    public Result<Object> doFileUpload(
+    public Result<UploadFile> doFileUpload(
             @PathVariable("category") String category,
             @RequestParam(required = false) Map<String, String> queries,
             @RequestPart(required = false) MultipartFile file,
@@ -306,10 +306,10 @@ public abstract class AbstractUploadController {
             throw ResultException.badRequest("invalid request, request body can not be empty");
         }
         if (info.valid()) {
-            Object uploadFile = uploadByResumable(category, info, queries, request);
+            UploadFile uploadFile = uploadByResumable(category, info, queries, request);
             return Result.data(uploadFile).success();
         } else if (null != file && !file.isEmpty()) {
-            Object uploadFile = uploadByMultipartFile(category, queries, file);
+            UploadFile uploadFile = uploadByMultipartFile(category, queries, file);
             return Result.data(uploadFile).success();
         } else {
             throw ResultException.badRequest("invalid request, neither segmented or full file");
@@ -318,7 +318,7 @@ public abstract class AbstractUploadController {
 
     @ApiOperation(value = "上传检查", notes = "对切片上传的切片进行检查，减少重复上传")
     @GetMapping("/{category:[A-Za-z0-9_-]+}")
-    public Result<?> doUploadCheck(@PathVariable("category") String category,
+    public Result<UploadFile> doUploadCheck(@PathVariable("category") String category,
                                    @RequestParam(required = false) Map<String, String> queries) throws ResultException {
         ResumableInfo info = buildResumableInfo(queries, category);
         if (!info.valid()) {
@@ -341,7 +341,7 @@ public abstract class AbstractUploadController {
                 }
                 return Result.data(uploadFile).success();
             }
-            return Result.message("file not exists").failure(ResultCode.NOT_FOUND);
+            throw ResultException.notFound("file not exists");
         }
     }
 
