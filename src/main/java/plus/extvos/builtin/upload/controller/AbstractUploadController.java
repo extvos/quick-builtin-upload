@@ -283,6 +283,23 @@ public abstract class AbstractUploadController {
             if (resumbleInfoStorage.size(info.identifier) >= info.totalChunks) {
                 uploadFile = mergeSegments(info.identifier, info.totalChunks);
                 resumbleInfoStorage.remove(info.identifier);
+                try {
+                    /* call processor to process uploaded file, remove it when return TRUE of got an exception */
+                    UploadResult result = processor().process(uploadFile, category, queries);
+                    if (result.isProcessed()) {
+                        if (!new File(info.fullFilename).delete()) {
+                            log.warn("doFileUpload:> delete file {} failed", info.fullFilename);
+                        }
+                    }
+                    if (result.getResult() != null) {
+                        return result.getResult();
+                    }
+                } catch (ResultException e) {
+                    if (!new File(info.fullFilename).delete()) {
+                        log.warn("doFileUpload:> delete file {} failed", info.fullFilename);
+                    }
+                    throw e;
+                }
             }
         } catch (IOException e) {
             log.error(">>", e);
