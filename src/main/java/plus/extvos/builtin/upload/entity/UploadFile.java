@@ -118,7 +118,7 @@ public class UploadFile implements Serializable {
     public String getUri() {
         String s = StringUtils.trimLeadingCharacter(this.getFilename(), '/');
         if (null != this.getPrefix() && !this.getPrefix().isEmpty()) {
-            s = String.join("/", StringUtils.trimTrailingCharacter(this.getPrefix(), '/'), this.getFilename());
+            s = String.join("/", StringUtils.trimTrailingCharacter(this.getPrefix(), '/'), s);
         }
         return s;
     }
