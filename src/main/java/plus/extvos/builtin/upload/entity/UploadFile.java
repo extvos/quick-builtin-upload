@@ -25,6 +25,8 @@ public class UploadFile implements Serializable {
 
     private String checksum;
 
+    private String type;
+
     public UploadFile() {
 
     }
@@ -105,10 +107,18 @@ public class UploadFile implements Serializable {
         this.category = category;
     }
 
+    public String getType() {
+        return type;
+    }
+
+    public void setType(String type) {
+        this.type = type;
+    }
+
     public String getUri() {
-        String s = StringUtils.trimLeadingCharacter(this.getFilename(),'/');
+        String s = StringUtils.trimLeadingCharacter(this.getFilename(), '/');
         if (null != this.getPrefix() && !this.getPrefix().isEmpty()) {
-            s = String.join("/", StringUtils.trimTrailingCharacter(this.getPrefix(),'/'), this.getFilename());
+            s = String.join("/", StringUtils.trimTrailingCharacter(this.getPrefix(), '/'), this.getFilename());
         }
         return s;
     }

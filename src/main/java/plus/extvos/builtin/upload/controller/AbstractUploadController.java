@@ -22,6 +22,7 @@ import plus.extvos.common.exception.ResultException;
 
 import javax.servlet.http.HttpServletRequest;
 import java.io.*;
+import java.nio.file.Files;
 import java.util.*;
 
 /**
@@ -165,6 +166,7 @@ public abstract class AbstractUploadController {
             uploadFile.setChecksum(QuickHash.md5().hash(bytes).hex());
             out.write(bytes);
             out.close();
+            uploadFile.setType(Files.probeContentType(new File(fullFilename).toPath()));
         } catch (IOException e) {
 
             log.error(">>", e);
@@ -240,6 +242,7 @@ public abstract class AbstractUploadController {
             FileUtils.deleteDirectory(pf);
         }
         uploadFile.setChecksum(qh.hex());
+        uploadFile.setType(Files.probeContentType(new File(fullFilename).toPath()));
         log.debug("merged segments of {} ", fullFilename);
         return uploadFile;
         // TODO: remove segments

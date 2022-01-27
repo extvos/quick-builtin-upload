@@ -36,6 +36,7 @@ public class CommonUploadController extends AbstractUploadController implements 
         public CommonUploadFile(UploadFile uf) {
             // String identifier, String filename, String root, String prefix, long size, String origName, String checksum
             super(uf.getCategory(), uf.getIdentifier(), uf.getFilename(), uf.getRoot(), uf.getPrefix(), uf.getSize(), uf.getOriginalName(), uf.getChecksum());
+            this.setType(uf.getType());
             this.ref = "Ref";
         }
 
