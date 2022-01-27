@@ -1,25 +1,37 @@
 package plus.extvos.builtin.upload.entity;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+
 import java.io.Serializable;
 
 /**
  * @author Mingcai SHEN
  */
 public class UploadFile implements Serializable {
+    private String category;
+
     private String identifier;
+
     private String filename;
+
     private String root;
+
     private String prefix;
+
     private String url;
+
     private long size;
+
     private String originalName;
+
     private String checksum;
 
     public UploadFile() {
 
     }
 
-    public UploadFile(String identifier, String filename, String root, String prefix, long size, String origName, String checksum) {
+    public UploadFile(String category, String identifier, String filename, String root, String prefix, long size, String origName, String checksum) {
+        this.category = category;
         this.identifier = identifier;
         this.filename = filename;
         this.root = root;
@@ -94,5 +106,13 @@ public class UploadFile implements Serializable {
 
     public void setIdentifier(String identifier) {
         this.identifier = identifier;
+    }
+
+    public String getCategory() {
+        return category;
+    }
+
+    public void setCategory(String category) {
+        this.category = category;
     }
 }

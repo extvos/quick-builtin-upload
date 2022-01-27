@@ -25,7 +25,7 @@ public class UploadConfig implements Serializable {
     /**
      * 上传根目录
      */
-    @Value("${quick.builtin.upload.prefix:/tmp/upload}")
+    @Value("${quick.builtin.upload.prefix:/upload}")
     private String prefix;
     /**
      * 临时目录

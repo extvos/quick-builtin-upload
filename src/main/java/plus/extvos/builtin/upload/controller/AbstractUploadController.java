@@ -157,7 +157,7 @@ public abstract class AbstractUploadController {
         String identifier = QuickHash.md5().random().hex();
         String targetFilename = buildTargetFilename(category, file.getOriginalFilename(), file.getContentType(),
                 identifier);
-        UploadFile uploadFile = new UploadFile(identifier, targetFilename, root, processor().prefix(), file.getSize(), file.getOriginalFilename(), "");
+        UploadFile uploadFile = new UploadFile(category, identifier, targetFilename, root, processor().prefix(), file.getSize(), file.getOriginalFilename(), "");
         String fullFilename = String.join("/", root, targetFilename);
         OutputStream out = createFileStream(fullFilename);
         try {
@@ -195,7 +195,7 @@ public abstract class AbstractUploadController {
         String fullFilename = null;
         File pf = null;
         List<String> chunkFiles = new ArrayList<String>();
-        UploadFile uploadFile = new UploadFile();
+        UploadFile uploadFile = null; //
         log.debug("mergeSegments:> {}, {} ...", identifier, chunks);
         for (int i = 1; i <= chunks; i++) {
             ResumableInfo info = resumbleInfoStorage.get(identifier, i);
@@ -206,18 +206,22 @@ public abstract class AbstractUploadController {
             if (null == fullFilename) {
                 fullFilename = info.fullFilename;
                 String fname = processor().useTemporary() ? fullFilename.substring(processor().temporary().length()) : fullFilename.substring(processor().root().length());
-                uploadFile.setFilename(fname);
-                uploadFile.setSize(info.totalSize);
-                uploadFile.setIdentifier(info.identifier);
-                uploadFile.setOriginalName(info.filename);
+                uploadFile = new UploadFile("", identifier, fname, processor().root(), processor().prefix(), info.totalSize, info.filename, "");
+//                uploadFile.setFilename(fname);
+//                uploadFile.setSize(info.totalSize);
+//                uploadFile.setIdentifier(info.identifier);
+//                uploadFile.setOriginalName(info.filename);
                 uploadFile.setUrl(processor().prefix() + "/" + fname);
-                uploadFile.setRoot(processor().root());
-                uploadFile.setPrefix(processor().prefix());
+//                uploadFile.setRoot(processor().root());
+//                uploadFile.setPrefix(processor().prefix());
             }
             if (null == pf) {
                 pf = new File(info.chunkFilename).getParentFile();
             }
             chunkFiles.add(info.chunkFilename);
+        }
+        if (null == uploadFile) {
+            return null;
         }
         OutputStream out = createFileStream(fullFilename);
         QuickHash qh = QuickHash.md5();
@@ -258,7 +262,8 @@ public abstract class AbstractUploadController {
         if (!info.valid()) {
             throw ResultException.badRequest("invalid resumble parameters");
         }
-        UploadFile uploadFile = new UploadFile();
+        UploadFile uploadFile = null; //new UploadFile(category, info.identifier, info.filename, processor().root(), processor().prefix(), info.totalSize, info.filename, "");
+
         long contentLength = request.getContentLength();
         if (contentLength != info.chunkSize) {
             log.warn("uploadByResumable:> content-length not match chunk-size: {} {}", contentLength, info.chunkSize);
@@ -282,6 +287,9 @@ public abstract class AbstractUploadController {
             resumbleInfoStorage.set(info);
             if (resumbleInfoStorage.size(info.identifier) >= info.totalChunks) {
                 uploadFile = mergeSegments(info.identifier, info.totalChunks);
+                if (null != uploadFile) {
+                    uploadFile.setCategory(category);
+                }
                 resumbleInfoStorage.remove(info.identifier);
                 try {
                     /* call processor to process uploaded file, remove it when return TRUE of got an exception */
@@ -336,7 +344,7 @@ public abstract class AbstractUploadController {
     @ApiOperation(value = "上传检查", notes = "对切片上传的切片进行检查，减少重复上传")
     @GetMapping("/{category:[A-Za-z0-9_-]+}")
     public Result<UploadFile> doUploadCheck(@PathVariable("category") String category,
-                                   @RequestParam(required = false) Map<String, String> queries) throws ResultException {
+                                            @RequestParam(required = false) Map<String, String> queries) throws ResultException {
         ResumableInfo info = buildResumableInfo(queries, category);
         if (!info.valid()) {
             throw ResultException.badRequest("only segmenting is allowed");
