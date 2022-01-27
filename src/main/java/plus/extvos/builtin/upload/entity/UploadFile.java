@@ -1,6 +1,7 @@
 package plus.extvos.builtin.upload.entity;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import org.springframework.util.StringUtils;
 
 import java.io.Serializable;
 
@@ -18,8 +19,6 @@ public class UploadFile implements Serializable {
 
     private String prefix;
 
-    private String url;
-
     private long size;
 
     private String originalName;
@@ -36,7 +35,6 @@ public class UploadFile implements Serializable {
         this.filename = filename;
         this.root = root;
         this.prefix = prefix;
-        this.url = prefix + "/" + filename;
         this.size = size;
         this.originalName = origName;
         this.checksum = checksum;
@@ -44,19 +42,11 @@ public class UploadFile implements Serializable {
 
     public void setFilename(String filename) {
         this.filename = filename;
-        this.url = prefix + "/" + filename;
     }
 
-    public void setUrl(String url) {
-        this.url = url;
-    }
 
     public String getFilename() {
         return filename;
-    }
-
-    public String getUrl() {
-        return url;
     }
 
     public long getSize() {
@@ -89,7 +79,6 @@ public class UploadFile implements Serializable {
 
     public void setPrefix(String prefix) {
         this.prefix = prefix;
-        this.url = prefix + "/" + this.filename;
     }
 
     public String getOriginalName() {
@@ -114,5 +103,13 @@ public class UploadFile implements Serializable {
 
     public void setCategory(String category) {
         this.category = category;
+    }
+
+    public String getUri() {
+        String s = StringUtils.trimLeadingCharacter(this.getFilename(),'/');
+        if (null != this.getPrefix() && !this.getPrefix().isEmpty()) {
+            s = String.join("/", StringUtils.trimTrailingCharacter(this.getPrefix(),'/'), this.getFilename());
+        }
+        return s;
     }
 }

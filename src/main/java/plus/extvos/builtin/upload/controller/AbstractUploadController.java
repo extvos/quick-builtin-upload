@@ -211,7 +211,6 @@ public abstract class AbstractUploadController {
 //                uploadFile.setSize(info.totalSize);
 //                uploadFile.setIdentifier(info.identifier);
 //                uploadFile.setOriginalName(info.filename);
-                uploadFile.setUrl(processor().prefix() + "/" + fname);
 //                uploadFile.setRoot(processor().root());
 //                uploadFile.setPrefix(processor().prefix());
             }
