@@ -15,8 +15,8 @@ import plus.extvos.builtin.upload.entity.UploadFile;
 import plus.extvos.builtin.upload.entity.UploadResult;
 import plus.extvos.builtin.upload.service.StorageService;
 import plus.extvos.builtin.upload.service.impl.ResumableInfoStorage;
+import plus.extvos.builtin.upload.service.impl.UploadResultStorage;
 import plus.extvos.common.utils.QuickHash;
-import plus.extvos.common.ResultCode;
 import plus.extvos.common.Result;
 import plus.extvos.common.exception.ResultException;
 
@@ -32,7 +32,8 @@ public abstract class AbstractUploadController {
 
     private static final Logger log = LoggerFactory.getLogger(AbstractUploadController.class);
 
-    private static final ResumableInfoStorage resumbleInfoStorage = ResumableInfoStorage.getInstance();
+    private static final ResumableInfoStorage resumableInfoStorage = ResumableInfoStorage.getInstance();
+    private static final UploadResultStorage uploadResultStorage = UploadResultStorage.getInstance();
 
     /**
      * get storage service
@@ -200,7 +201,7 @@ public abstract class AbstractUploadController {
         UploadFile uploadFile = null; //
         log.debug("mergeSegments:> {}, {} ...", identifier, chunks);
         for (int i = 1; i <= chunks; i++) {
-            ResumableInfo info = resumbleInfoStorage.get(identifier, i);
+            ResumableInfo info = resumableInfoStorage.get(identifier, i);
             if (null == info) {
                 log.warn("can not get chunk info: {}[{}]", identifier, i);
                 return null;
@@ -286,13 +287,13 @@ public abstract class AbstractUploadController {
             }
             is.close();
             out.close();
-            resumbleInfoStorage.set(info);
-            if (resumbleInfoStorage.size(info.identifier) >= info.totalChunks) {
+            resumableInfoStorage.set(info);
+            if (resumableInfoStorage.size(info.identifier) >= info.totalChunks) {
                 uploadFile = mergeSegments(info.identifier, info.totalChunks);
                 if (null != uploadFile) {
                     uploadFile.setCategory(category);
                 }
-                resumbleInfoStorage.remove(info.identifier);
+                resumableInfoStorage.remove(info.identifier);
                 try {
                     /* call processor to process uploaded file, remove it when return TRUE of got an exception */
                     UploadResult result = processor().process(uploadFile, category, queries);
@@ -302,6 +303,7 @@ public abstract class AbstractUploadController {
                         }
                     }
                     if (result.getResult() != null) {
+                        uploadResultStorage.set(info.identifier, result);
                         return result.getResult();
                     }
                 } catch (ResultException e) {
@@ -351,18 +353,45 @@ public abstract class AbstractUploadController {
         if (!info.valid()) {
             throw ResultException.badRequest("only segmenting is allowed");
         }
-        UploadFile uploadFile = new UploadFile();
-
+        UploadFile uploadFile; // = new UploadFile();
+        uploadFile = new UploadFile(category, info.identifier, info.filename, processor().root(), processor().prefix(), 0, info.fullFilename, "");
         if (processor().exists(info.fullFilename, info.identifier)) {
-            return Result.data(uploadFile).success();
+            UploadResult r = uploadResultStorage.get(info.identifier);
+            if (null != r) {
+                return Result.data(r.getResult()).success();
+            }
+            try {
+                File f = new File(info.fullFilename);
+                uploadFile.setSize(f.length());
+                uploadFile.setChecksum(QuickHash.md5().hash(f).hex());
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            UploadResult result = processor().process(uploadFile, category, queries);
+            uploadResultStorage.set(info.identifier, result);
+            return Result.data(result.getResult()).success();
         } else {
             if (processor().exists(info.chunkFilename, info.identifier)) {
-                resumbleInfoStorage.set(info);
-                if (resumbleInfoStorage.size(info.identifier) >= info.totalChunks) {
+                resumableInfoStorage.set(info);
+                if (resumableInfoStorage.size(info.identifier) >= info.totalChunks) {
                     try {
-                        mergeSegments(info.identifier, info.totalChunks);
+//                        mergeSegments(info.identifier, info.totalChunks);
+                        uploadFile = mergeSegments(info.identifier, info.totalChunks);
+                        if (null != uploadFile) {
+                            uploadFile.setCategory(category);
+                        }
+                        resumableInfoStorage.remove(info.identifier);
+
+                        /* call processor to process uploaded file, remove it when return TRUE of got an exception */
+                        UploadResult result = processor().process(uploadFile, category, queries);
+                        if (result.isProcessed()) {
+                            if (!new File(info.fullFilename).delete()) {
+                                log.warn("doFileUpload:> delete file {} failed", info.fullFilename);
+                            }
+                        }
+                        return Result.data(result.getResult()).success();
                     } catch (IOException e) {
-                        e.printStackTrace();
+//                        e.printStackTrace();
                         log.error(">>", e);
                     }
                 }
