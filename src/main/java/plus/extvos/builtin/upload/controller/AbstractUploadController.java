@@ -269,7 +269,8 @@ public abstract class AbstractUploadController {
 
         long contentLength = request.getContentLength();
         if (contentLength != info.chunkSize) {
-            log.warn("uploadByResumable:> content-length not match chunk-size: {} {}", contentLength, info.chunkSize);
+            log.error("uploadByResumable:> content-length not match chunk-size: {} {}", contentLength, info.chunkSize);
+            throw ResultException.badRequest("content-length(" + contentLength + ") not match chunk-size(" + info.chunkSize + ")");
         }
         try {
             OutputStream out = createFileStream(info.chunkFilename);
