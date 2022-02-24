@@ -13,6 +13,10 @@ import java.util.Map;
  */
 @Configuration
 public class UploadConfig implements Serializable {
+
+    @Value("${quick.builtin.upload.enabled:false}")
+    private boolean enabled;
+
     /**
      * 上传根目录
      */
@@ -21,7 +25,7 @@ public class UploadConfig implements Serializable {
     /**
      * 上传根目录
      */
-    @Value("${quick.builtin.upload.prefix:/tmp/upload}")
+    @Value("${quick.builtin.upload.prefix:/upload}")
     private String prefix;
     /**
      * 临时目录
@@ -74,6 +78,10 @@ public class UploadConfig implements Serializable {
 
     @Value("${quick.builtin.upload.parameters.total-chunks:resumableTotalChunks}")
     private String totalChunksParameterName;
+
+    public boolean isEnabled() {
+        return enabled;
+    }
 
     public String getRoot() {
         return root;

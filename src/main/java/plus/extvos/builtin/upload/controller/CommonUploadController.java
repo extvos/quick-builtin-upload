@@ -2,6 +2,7 @@ package plus.extvos.builtin.upload.controller;
 
 import io.swagger.annotations.Api;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import plus.extvos.builtin.upload.config.UploadConfig;
@@ -19,6 +20,7 @@ import java.util.Map;
 @RestController
 @Api(tags = {"文件上传服务"})
 @RequestMapping("/_builtin/upload")
+@ConditionalOnProperty(prefix = "quick.builtin.upload", name = "enabled", havingValue = "true")
 public class CommonUploadController extends AbstractUploadController implements StorageService {
 
     @Autowired
@@ -33,7 +35,8 @@ public class CommonUploadController extends AbstractUploadController implements 
 
         public CommonUploadFile(UploadFile uf) {
             // String identifier, String filename, String root, String prefix, long size, String origName, String checksum
-            super(uf.getIdentifier(), uf.getFilename(), uf.getRoot(), uf.getPrefix(), uf.getSize(), uf.getOriginalName(), uf.getChecksum());
+            super(uf.getCategory(), uf.getIdentifier(), uf.getFilename(), uf.getRoot(), uf.getPrefix(), uf.getSize(), uf.getOriginalName(), uf.getChecksum());
+            this.setType(uf.getType());
             this.ref = "Ref";
         }
 

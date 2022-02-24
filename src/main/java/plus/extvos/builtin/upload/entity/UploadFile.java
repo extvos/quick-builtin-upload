@@ -1,30 +1,42 @@
 package plus.extvos.builtin.upload.entity;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import org.springframework.util.StringUtils;
+
 import java.io.Serializable;
 
 /**
  * @author Mingcai SHEN
  */
 public class UploadFile implements Serializable {
+    private String category;
+
     private String identifier;
+
     private String filename;
+
     private String root;
+
     private String prefix;
-    private String url;
+
     private long size;
+
     private String originalName;
+
     private String checksum;
+
+    private String type;
 
     public UploadFile() {
 
     }
 
-    public UploadFile(String identifier, String filename, String root, String prefix, long size, String origName, String checksum) {
+    public UploadFile(String category, String identifier, String filename, String root, String prefix, long size, String origName, String checksum) {
+        this.category = category;
         this.identifier = identifier;
         this.filename = filename;
         this.root = root;
         this.prefix = prefix;
-        this.url = prefix + "/" + filename;
         this.size = size;
         this.originalName = origName;
         this.checksum = checksum;
@@ -32,19 +44,11 @@ public class UploadFile implements Serializable {
 
     public void setFilename(String filename) {
         this.filename = filename;
-        this.url = prefix + "/" + filename;
     }
 
-    public void setUrl(String url) {
-        this.url = url;
-    }
 
     public String getFilename() {
         return filename;
-    }
-
-    public String getUrl() {
-        return url;
     }
 
     public long getSize() {
@@ -77,7 +81,6 @@ public class UploadFile implements Serializable {
 
     public void setPrefix(String prefix) {
         this.prefix = prefix;
-        this.url = prefix + "/" + this.filename;
     }
 
     public String getOriginalName() {
@@ -94,5 +97,29 @@ public class UploadFile implements Serializable {
 
     public void setIdentifier(String identifier) {
         this.identifier = identifier;
+    }
+
+    public String getCategory() {
+        return category;
+    }
+
+    public void setCategory(String category) {
+        this.category = category;
+    }
+
+    public String getType() {
+        return type;
+    }
+
+    public void setType(String type) {
+        this.type = type;
+    }
+
+    public String getUri() {
+        String s = StringUtils.trimLeadingCharacter(this.getFilename(), '/');
+        if (null != this.getPrefix() && !this.getPrefix().isEmpty()) {
+            s = String.join("/", StringUtils.trimTrailingCharacter(this.getPrefix(), '/'), s);
+        }
+        return s;
     }
 }
