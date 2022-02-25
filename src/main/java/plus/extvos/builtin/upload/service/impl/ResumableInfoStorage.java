@@ -36,7 +36,7 @@ public class ResumableInfoStorage {
      *
      * @param identifier
      * @param chunk
-     * @return
+     * @return ResumableInfo
      */
     public synchronized ResumableInfo get(String identifier, Integer chunk) {
 //        log.debug("get:> {}, {}", identifier, chunk);

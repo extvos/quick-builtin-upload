@@ -32,7 +32,7 @@ public class UploadResultStorage {
      * Get ResumableInfo from mMap or Create a new one.
      *
      * @param identifier
-     * @return
+     * @return UploadResult
      */
     public synchronized UploadResult get(String identifier) {
 //        log.debug("get:> {}, {}", identifier, chunk);
