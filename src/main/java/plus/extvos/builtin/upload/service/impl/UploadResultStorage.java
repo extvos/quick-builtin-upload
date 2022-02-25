@@ -31,7 +31,7 @@ public class UploadResultStorage {
     /**
      * Get ResumableInfo from mMap or Create a new one.
      *
-     * @param identifier
+     * @param identifier string
      * @return UploadResult
      */
     public synchronized UploadResult get(String identifier) {
@@ -47,7 +47,7 @@ public class UploadResultStorage {
     /**
      * É¾³ýResumableInfo
      *
-     * @param identifier
+     * @param identifier string
      */
     public synchronized void remove(String identifier) {
         infoMap.remove(identifier);

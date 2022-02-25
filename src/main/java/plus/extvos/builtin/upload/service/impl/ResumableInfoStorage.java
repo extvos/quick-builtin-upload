@@ -34,8 +34,8 @@ public class ResumableInfoStorage {
     /**
      * Get ResumableInfo from mMap or Create a new one.
      *
-     * @param identifier
-     * @param chunk
+     * @param identifier string
+     * @param chunk integer
      * @return ResumableInfo
      */
     public synchronized ResumableInfo get(String identifier, Integer chunk) {
@@ -48,6 +48,11 @@ public class ResumableInfoStorage {
         }
     }
 
+    /**
+     * get size
+     * @param identifier string
+     * @return size as integer
+     */
     public synchronized int size(String identifier) {
 
         Map<Integer, ResumableInfo> m = infoMap.get(identifier);
@@ -60,6 +65,10 @@ public class ResumableInfoStorage {
         }
     }
 
+    /**
+     * set resumable info
+     * @param info in ResumableInfo
+     */
     public synchronized void set(ResumableInfo info) {
 //        log.debug("set:> {}, {}, {}", info.identifier, info.chunkNum, info.chunkFilename);
         Map<Integer, ResumableInfo> m = infoMap.get(info.identifier);
@@ -78,7 +87,7 @@ public class ResumableInfoStorage {
     /**
      * É¾³ýResumableInfo
      *
-     * @param identifier
+     * @param identifier string
      */
     public synchronized void remove(String identifier) {
         infoMap.remove(identifier);
