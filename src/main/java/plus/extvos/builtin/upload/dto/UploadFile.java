@@ -1,4 +1,4 @@
-package plus.extvos.builtin.upload.entity;
+package plus.extvos.builtin.upload.dto;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import org.springframework.util.StringUtils;

@@ -2,23 +2,22 @@ package plus.extvos.builtin.upload.service.impl;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import plus.extvos.builtin.upload.entity.ResumableInfo;
-import plus.extvos.builtin.upload.entity.UploadResult;
+import plus.extvos.builtin.upload.dto.UploadResult;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-public class UploadResultStorage {
+public class ResultStorage {
     //Single instance
-    private UploadResultStorage() {
+    private ResultStorage() {
     }
 
-    private static UploadResultStorage sInstance;
-    private static final Logger log = LoggerFactory.getLogger(UploadResultStorage.class);
+    private static ResultStorage sInstance;
+    private static final Logger log = LoggerFactory.getLogger(ResultStorage.class);
 
-    public static synchronized UploadResultStorage getInstance() {
+    public static synchronized ResultStorage getInstance() {
         if (sInstance == null) {
-            sInstance = new UploadResultStorage();
+            sInstance = new ResultStorage();
         }
         return sInstance;
     }

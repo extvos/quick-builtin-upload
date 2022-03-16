@@ -10,12 +10,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-import plus.extvos.builtin.upload.entity.ResumableInfo;
-import plus.extvos.builtin.upload.entity.UploadFile;
-import plus.extvos.builtin.upload.entity.UploadResult;
+import plus.extvos.builtin.upload.dto.ResumableInfo;
+import plus.extvos.builtin.upload.dto.UploadFile;
+import plus.extvos.builtin.upload.dto.UploadResult;
+import plus.extvos.builtin.upload.enums.ResultCode;
 import plus.extvos.builtin.upload.service.StorageService;
 import plus.extvos.builtin.upload.service.impl.ResumableInfoStorage;
-import plus.extvos.builtin.upload.service.impl.UploadResultStorage;
+import plus.extvos.builtin.upload.service.impl.ResultStorage;
 import plus.extvos.common.utils.QuickHash;
 import plus.extvos.common.Result;
 import plus.extvos.common.exception.ResultException;
@@ -33,7 +34,7 @@ public abstract class AbstractUploadController {
     private static final Logger log = LoggerFactory.getLogger(AbstractUploadController.class);
 
     private static final ResumableInfoStorage resumableInfoStorage = ResumableInfoStorage.getInstance();
-    private static final UploadResultStorage uploadResultStorage = UploadResultStorage.getInstance();
+    private static final ResultStorage uploadResultStorage = ResultStorage.getInstance();
 
     /**
      * get storage service
@@ -121,7 +122,7 @@ public abstract class AbstractUploadController {
         } catch (FileNotFoundException e) {
 
             log.error(">>", e);
-            throw new ResultException(UploadResultCode.FORBIDDEN_CREATE,
+            throw new ResultException(ResultCode.FORBIDDEN_CREATE,
                     "create file '" + f.getPath() + "' failed: " + e.getMessage());
         }
     }
@@ -139,7 +140,7 @@ public abstract class AbstractUploadController {
         } catch (IOException e) {
 
             log.error(">>", e);
-            throw new ResultException(UploadResultCode.FORBIDDEN_CREATE,
+            throw new ResultException(ResultCode.FORBIDDEN_CREATE,
                     "create file '" + f.getPath() + "' failed: " + e.getMessage());
         }
     }
@@ -171,7 +172,7 @@ public abstract class AbstractUploadController {
         } catch (IOException e) {
 
             log.error(">>", e);
-            throw new ResultException(UploadResultCode.FORBIDDEN_CREATE,
+            throw new ResultException(ResultCode.FORBIDDEN_CREATE,
                     "write file '" + targetFilename + "' failed: " + e.getMessage());
         }
         try {

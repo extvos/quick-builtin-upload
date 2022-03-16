@@ -1,4 +1,4 @@
-package plus.extvos.builtin.upload.controller;
+package plus.extvos.builtin.upload.enums;
 
 import plus.extvos.common.Code;
 
@@ -6,11 +6,13 @@ import plus.extvos.common.Code;
  * @author Mingcai SHEN
  */
 
-public enum UploadResultCode implements Code {
+public enum ResultCode implements Code {
     /**
      *
      */
-    FORBIDDEN_CREATE(40311, "Not Allowed To Create"),
+    FORBIDDEN_READ(40311, "Not Allowed To Read"),
+    FORBIDDEN_CREATE(40312, "Not Allowed To Create"),
+    FORBIDDEN_DELETE(40313, "Not Allowed To Delete"),
     FILE_NOT_EXISTS(40411, "File Not Exists"),
     SEGMENT_NOT_EXISTS(40412, "Segment Not Exists"),
     /**
@@ -22,7 +24,7 @@ public enum UploadResultCode implements Code {
     private final int value;
     private final String desc;
 
-    UploadResultCode(int v, String d) {
+    ResultCode(int v, String d) {
         value = v;
         desc = d;
     }

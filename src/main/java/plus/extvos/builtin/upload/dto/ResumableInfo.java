@@ -1,4 +1,4 @@
-package plus.extvos.builtin.upload.entity;
+package plus.extvos.builtin.upload.dto;
 
 import java.io.File;
 import java.util.HashSet;
