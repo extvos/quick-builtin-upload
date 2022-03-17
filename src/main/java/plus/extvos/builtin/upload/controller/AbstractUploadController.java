@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import plus.extvos.builtin.upload.dto.ResumableInfo;
 import plus.extvos.builtin.upload.dto.UploadFile;
+import plus.extvos.builtin.upload.dto.UploadOptions;
 import plus.extvos.builtin.upload.dto.UploadResult;
 import plus.extvos.builtin.upload.enums.ResultCode;
 import plus.extvos.builtin.upload.service.StorageService;
@@ -405,23 +406,18 @@ public abstract class AbstractUploadController {
 
     @ApiOperation(value = "文件上传选项", notes = "获取当前后台文件上传配置")
     @GetMapping("/options")
-    public Result<Map<String, Object>> getUploadOptions() {
-        Map<String, Object> m = new LinkedHashMap<>();
-        m.put("root", processor().root());
-        m.put("prefix", processor().prefix());
-        m.put("temporary", processor().temporary());
-        m.put("chunkSize", processor().chunkSize());
-        m.put("simultaneous", processor().simultaneous());
-        m.put("chunkNumberParameterName", processor().chunkNumberParameterName());
-        m.put("chunkSizeParameterName", processor().chunkSizeParameterName());
-        m.put("currentChunkSizeParameterName", processor().currentChunkSizeParameterName());
-        m.put("totalSizeParameterName", processor().totalSizeParameterName());
-        m.put("typeParameterName", processor().typeParameterName());
-        m.put("identifierParameterName", processor().identifierParameterName());
-        m.put("fileNameParameterName", processor().fileNameParameterName());
-        m.put("relativePathParameterName", processor().relativePathParameterName());
-        m.put("totalChunksParameterName", processor().totalChunksParameterName());
-        m.put("pathSegments", processor().pathSegments());
-        return Result.data(m).success();
+    public Result<UploadOptions> getUploadOptions() {
+        UploadOptions opts = new UploadOptions(processor().chunkSize(), processor().simultaneous(), processor().temporary(), "", processor().prefix(), processor().root());
+        opts.setChunkNumberParameterName(processor().chunkNumberParameterName());
+        opts.setChunkSizeParameterName(processor().chunkSizeParameterName());
+        opts.setCurrentChunkSizeParameterName(processor().currentChunkSizeParameterName());
+        opts.setTotalSizeParameterName(processor().totalSizeParameterName());
+        opts.setTypeParameterName(processor().typeParameterName());
+        opts.setIdentifierParameterName(processor().identifierParameterName());
+        opts.setFileNameParameterName(processor().fileNameParameterName());
+        opts.setRelativePathParameterName(processor().relativePathParameterName());
+        opts.setTotalChunksParameterName(processor().totalChunksParameterName());
+        opts.setPathSegments(processor().pathSegments());
+        return Result.data(opts).success();
     }
 }
