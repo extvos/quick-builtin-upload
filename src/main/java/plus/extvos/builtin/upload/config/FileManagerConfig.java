@@ -36,4 +36,52 @@ public class FileManagerConfig {
      */
     @Value("${quick.builtin.filemanager.simultaneous:5}")
     private Integer simultaneous;
+
+    public String getRoot() {
+        return root;
+    }
+
+    public void setRoot(String root) {
+        this.root = root;
+    }
+
+    public String getPrefix() {
+        return prefix;
+    }
+
+    public void setPrefix(String prefix) {
+        this.prefix = prefix;
+    }
+
+    public String getBaseUrl() {
+        return baseUrl;
+    }
+
+    public void setBaseUrl(String baseUrl) {
+        this.baseUrl = baseUrl;
+    }
+
+    public String getTemporary() {
+        return temporary;
+    }
+
+    public void setTemporary(String temporary) {
+        this.temporary = temporary;
+    }
+
+    public long getChunkSize() {
+        return chunkSize;
+    }
+
+    public void setChunkSize(long chunkSize) {
+        this.chunkSize = chunkSize;
+    }
+
+    public Integer getSimultaneous() {
+        return simultaneous;
+    }
+
+    public void setSimultaneous(Integer simultaneous) {
+        this.simultaneous = simultaneous;
+    }
 }

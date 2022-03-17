@@ -32,6 +32,17 @@ public interface FileService {
     FileInfo mkdir(String bucket, String path, String filename) throws ResultException;
 
     /**
+     * Build file object
+     *
+     * @param bucket
+     * @param path
+     * @param filename
+     * @return
+     * @throws ResultException
+     */
+    File file(String bucket, String path, String filename) throws ResultException;
+
+    /**
      * Read a file
      *
      * @param bucket

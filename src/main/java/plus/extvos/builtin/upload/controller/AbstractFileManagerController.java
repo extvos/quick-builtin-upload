@@ -6,11 +6,14 @@ import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import plus.extvos.builtin.upload.config.FileManagerConfig;
 import plus.extvos.builtin.upload.dto.FileInfo;
 import plus.extvos.builtin.upload.dto.ResumableInfo;
 import plus.extvos.builtin.upload.dto.UploadFile;
+import plus.extvos.builtin.upload.dto.UploadOptions;
 import plus.extvos.builtin.upload.enums.FileType;
 import plus.extvos.builtin.upload.service.FileService;
 import plus.extvos.builtin.upload.service.impl.ResultStorage;
@@ -22,10 +25,15 @@ import plus.extvos.common.exception.ResultException;
 import plus.extvos.common.utils.QuickHash;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import java.io.*;
+import java.nio.file.Files;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+
+import static plus.extvos.builtin.upload.enums.ResultCode.FILE_NOT_EXISTS;
+import static plus.extvos.builtin.upload.enums.ResultCode.FORBIDDEN_READ;
 
 /**
  * Abstract FileManager Controller, a basic filemanager with upload/delete/directory etc...
@@ -35,13 +43,29 @@ import java.util.List;
 @Api(tags = {"文件管理"})
 public abstract class AbstractFileManagerController {
     private static final Logger log = LoggerFactory.getLogger(AbstractFileManagerController.class);
-
     private static final ResumableInfoStorage resumableInfoStorage = ResumableInfoStorage.getInstance();
     private static final ResultStorage uploadResultStorage = ResultStorage.getInstance();
 
     protected abstract FileService fs();
 
-    @PostMapping("/{bucket:[A-Za-z0-9_-]+}")
+    @Autowired
+    private FileManagerConfig fileManagerConfig;
+
+    @GetMapping("/options")
+    @ApiOperation(value = "选项配置", notes = "获取文件管理器的选项配置。 ")
+    public Result<UploadOptions> getOptions() throws ResultException {
+        UploadOptions opts = new UploadOptions(
+                fileManagerConfig.getChunkSize(),
+                fileManagerConfig.getSimultaneous(),
+                fileManagerConfig.getTemporary(),
+                fileManagerConfig.getBaseUrl(),
+                fileManagerConfig.getPrefix(),
+                fileManagerConfig.getRoot()
+        );
+        return Result.data(opts).success();
+    }
+
+    @PostMapping("/{bucket:[A-Za-z0-9_-]+}/files")
     @ApiOperation(value = "上传切片或文件或请求创建目录", notes = "上传切片或文件或请求创建目录。切片上传遵循Resumable.js的规格。Multipart方式文件上传亦支持。mkdir=true时指定创建目录。")
     public Result<FileInfo> doPostRequest(@PathVariable("bucket") String bucket,
                                           @RequestParam(value = "path", required = false) String path,
@@ -92,7 +116,53 @@ public abstract class AbstractFileManagerController {
         throw ResultException.notImplemented();
     }
 
-    @GetMapping("/{bucket:[A-Za-z0-9_-]+}")
+    @GetMapping("/{bucket:[A-Za-z0-9_-]+}/raw")
+    @ApiOperation(value = "读取文件内容", notes = "读取文件内容")
+    public void getFileRaw(@PathVariable("bucket") String bucket,
+                           @RequestParam(value = "path", required = false) String path,
+                           @RequestParam(value = "filename", required = false) String filename,
+                           HttpServletRequest request,
+                           HttpServletResponse response) throws IOException {
+
+        try {
+            File f = fs().file(bucket, path, filename);
+            if (!f.exists()) {
+                response.sendError(HttpServletResponse.SC_NOT_FOUND, "file not found");
+                return;
+            } else if (!f.isFile()) {
+                response.sendError(HttpServletResponse.SC_FORBIDDEN, "file is not a regular file");
+                return;
+            }
+            InputStream is = fs().read(bucket, path, filename);
+
+            if (null == is) {
+                response.sendError(HttpServletResponse.SC_FORBIDDEN, "open file failed");
+            } else {
+                OutputStream os = response.getOutputStream();
+                String contentType = Files.probeContentType(f.toPath());
+                response.setContentType(contentType);
+                response.setStatus(HttpServletResponse.SC_OK);
+                int len = 0;
+                byte[] bytes = new byte[1024 * 100];
+                while ((len = is.read(bytes)) > 0) {
+                    os.write(bytes, 0, len);
+                }
+                is.close();
+                os.close();
+            }
+
+        } catch (ResultException e) {
+            if (FORBIDDEN_READ.equals(e.getCode())) {
+                response.sendError(HttpServletResponse.SC_FORBIDDEN, e.getMessage());
+            } else if (FILE_NOT_EXISTS.equals(e.getCode())) {
+                response.sendError(HttpServletResponse.SC_NOT_FOUND, e.getMessage());
+            } else {
+                response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, e.getMessage());
+            }
+        }
+    }
+
+    @GetMapping("/{bucket:[A-Za-z0-9_-]+}/files")
     @ApiOperation(value = "获取切片、文件或目录信息", notes = "获取切片、文件或目录信息，切片信息遵循Resumable.js的规格，而文件或目录信息则提供path和filename即可。")
     public Result<FileInfo> doGetRequest(@PathVariable("bucket") String bucket,
                                          @RequestParam(value = "path", required = false) String path,
@@ -110,14 +180,29 @@ public abstract class AbstractFileManagerController {
     ) throws ResultException {
         Assert.notEmpty(bucket, ResultException.forbidden("bucket can not be empty"));
         if (null != resumableIdentifier && null != resumableFilename) {
+            FileInfo fi = null;
+            try {
+                fi = fs().stat(bucket, resumableRelativePath, resumableFilename, false, false);
+            } catch (ResultException ignored) {
+//                fi = null;
+            }
+            if (null == fi) {
+                File f = fs().chunk(bucket, resumableRelativePath, resumableFilename, resumableChunkNumber);
+                if (!f.exists()) {
+                    throw ResultException.notFound();
+                } else {
+                    fi = new FileInfo(resumableRelativePath, resumableFilename, 0L, FileType.FILE, LocalDateTime.now(), "");
+                    fi.setChunkNum(resumableChunkNumber);
+                }
+            }
+            return Result.data(fi).success();
 
         } else {
             return Result.data(fs().stat(bucket, path, filename, withMd5, true)).success();
         }
-        throw ResultException.notImplemented();
     }
 
-    @DeleteMapping("/{bucket:[A-Za-z0-9_-]+}")
+    @DeleteMapping("/{bucket:[A-Za-z0-9_-]+}/files")
     @ApiOperation(value = "删除文件或目录", notes = "删除文件或目录，recursive=true时支持删除非空目录。")
     public Result<FileInfo> doDeleteRequest(@PathVariable("bucket") String bucket,
                                             @RequestParam(value = "path", required = false) String path,
