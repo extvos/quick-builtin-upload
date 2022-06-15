@@ -17,15 +17,17 @@ import plus.extvos.builtin.upload.dto.UploadResult;
 import plus.extvos.builtin.upload.enums.ResultCode;
 import plus.extvos.builtin.upload.service.StorageService;
 import plus.extvos.builtin.upload.service.impl.ResumableInfoStorage;
-import plus.extvos.builtin.upload.service.impl.ResultStorage;
-import plus.extvos.common.utils.QuickHash;
 import plus.extvos.common.Result;
 import plus.extvos.common.exception.ResultException;
+import plus.extvos.common.utils.QuickHash;
 
 import javax.servlet.http.HttpServletRequest;
 import java.io.*;
 import java.nio.file.Files;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author Mingcai SHEN
@@ -35,7 +37,7 @@ public abstract class AbstractUploadController {
     private static final Logger log = LoggerFactory.getLogger(AbstractUploadController.class);
 
     private static final ResumableInfoStorage resumableInfoStorage = ResumableInfoStorage.getInstance();
-    private static final ResultStorage uploadResultStorage = ResultStorage.getInstance();
+//    private static final ResultStorage uploadResultStorage = ResultStorage.getInstance();
 
     /**
      * get storage service
@@ -306,7 +308,7 @@ public abstract class AbstractUploadController {
                         }
                     }
                     if (result.getResult() != null) {
-                        uploadResultStorage.set(info.identifier, result);
+//                        uploadResultStorage.set(info.identifier, result);
                         return result.getResult();
                     }
                 } catch (ResultException e) {
@@ -357,12 +359,21 @@ public abstract class AbstractUploadController {
             throw ResultException.badRequest("only segmenting is allowed");
         }
         UploadFile uploadFile; // = new UploadFile();
-        uploadFile = new UploadFile(category, info.identifier, info.filename, processor().root(), processor().prefix(), 0, info.fullFilename, "");
+        String fname = processor().useTemporary() ? info.fullFilename.substring(processor().temporary().length()) : info.fullFilename.substring(processor().root().length());
+        uploadFile = new UploadFile(category, info.identifier, fname, processor().root(), processor().prefix(), 0, info.filename, "");
+        try {
+            uploadFile.setType(Files.probeContentType(new File(info.fullFilename).toPath()));
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
         if (processor().exists(info.fullFilename, info.identifier)) {
-            UploadResult r = uploadResultStorage.get(info.identifier);
-            if (null != r) {
-                return Result.data(r.getResult()).success();
+            if(info.chunkNum < info.totalChunks){
+                return Result.data(new UploadFile()).success();
             }
+//            UploadResult r = uploadResultStorage.get(info.identifier);
+//            if (null != r) {
+//                return Result.data(r.getResult()).success();
+//            }
             try {
                 File f = new File(info.fullFilename);
                 uploadFile.setSize(f.length());
@@ -371,7 +382,7 @@ public abstract class AbstractUploadController {
                 e.printStackTrace();
             }
             UploadResult result = processor().process(uploadFile, category, queries);
-            uploadResultStorage.set(info.identifier, result);
+//            uploadResultStorage.set(info.identifier, result);
             return Result.data(result.getResult()).success();
         } else {
             if (processor().exists(info.chunkFilename, info.identifier)) {
